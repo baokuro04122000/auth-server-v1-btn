@@ -1,0 +1,35 @@
+{
+  "name": "auth_service",
+  "version": "1.0.0",
+  "description": "this is a service for authentication",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "redis-commander": "redis-commander"
+  },
+  "keywords": [],
+  "author": "Bao Tran",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "bcrypt": "^5.0.1",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "helmet": "^6.0.0",
+    "http-errors": "^2.0.0",
+    "ioredis": "^5.2.3",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.21",
+    "mongoose": "^6.5.4",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.0",
+    "winston": "^3.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.19",
+    "redis-commander": "^0.8.0"
+  }
+}
