@@ -14,7 +14,7 @@ require('./v1/databases/init.redis')
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
-    origin:process.env.CLIENT_ENDPOINT,
+    origin:['http://localhost:3000','https://admin-page-6vbf.vercel.app'],
     credentials: true
 }))
 app.use(helmet())
