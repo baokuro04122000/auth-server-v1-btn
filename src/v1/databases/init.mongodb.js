@@ -2,8 +2,10 @@ const mongoose = require('mongoose')
 
 //connect mongoose
 mongoose.connect(
-   `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.81ywfpz.mongodb.net/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`,
-  { 
+  
+  `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.81ywfpz.mongodb.net/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`,
+  
+   { 
     useNewUrlParser: true, 
     autoIndex: false
  }).then( _ => console.log('Connected mongoose success!...'))

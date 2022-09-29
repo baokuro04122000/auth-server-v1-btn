@@ -10,18 +10,14 @@ var that  = module.exports = {
     try {
       const {data, access_token, refresh_token} = await authService.userLogin(email, password)
       res.cookie('access_token', access_token, {
-        origin:process.env.CLIENT_ENDPOINT,
         expires: new Date(Date.now() + Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND)),
         httpOnly: true,
-        sameSite:"strict",
-        //secure: true
+        secure: true
       })
       .cookie('refresh_token', refresh_token, {
-        origin:process.env.CLIENT_ENDPOINT,
         expires: new Date(Date.now() + Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED)),
-        sameSite:"strict",
         httpOnly: true,
-        //secure: true
+        secure: true
       })
       .send({
         data,
@@ -41,7 +37,8 @@ var that  = module.exports = {
       .cookie('active_account', false,
       {
         httpOnly: false,
-        maxAge:process.env.ACTIVE_ACCOUNT_COOKIE_EXPIRED
+        maxAge:Number(process.env.ACTIVE_ACCOUNT_COOKIE_EXPIRED),
+        secure:true
       })
       .json(data)
     } catch (error) {
@@ -82,18 +79,14 @@ var that  = module.exports = {
       const googleUser = await authService.getGoogleUser(id_token, access_token)
       const data = await authService.googleLogin(googleUser)
       res.cookie('access_token', data.access_token, {
-        origin:process.env.CLIENT_ENDPOINT,
         expires: new Date(Date.now() + Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND)),
         httpOnly: true,
-        sameSite:"strict",
-        //secure: true;
+        secure: true
       })
       res.cookie('refresh_token', data.refresh_token, {
-        origin:process.env.CLIENT_ENDPOINT,
         expires: new Date(Date.now() + Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED)),
-        sameSite:"strict",
         httpOnly: true,
-        //secure: true;
+        secure: true
       })
       res.redirect(`${process.env.CLIENT_ENDPOINT}/auth/login`)
     } catch (error) {
@@ -120,18 +113,14 @@ var that  = module.exports = {
         const refreshToken = await jwtService.signRefreshToken(payload)
         await redis.del(refresh_token)
         res.cookie('access_token', token, {
-          origin:process.env.CLIENT_ENDPOINT,
           expires: new Date(Date.now() + Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND)),
           httpOnly: true,
-          sameSite:"strict",
-          //secure: true;
+          secure: true
         })
         res.cookie('refresh_token', refreshToken, {
-          origin:process.env.CLIENT_ENDPOINT,
           expires: new Date(Date.now() + Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED)),
-          sameSite:"strict",
           httpOnly: true,
-          //secure: true;
+          secure: true
         })
         res.json({data:payload, access_token:token})
       } catch (error) {
@@ -172,7 +161,7 @@ var that  = module.exports = {
         })
       })
     }
-    res.status(404).json({
+    res.status(400).json({
       status:400,
       "errors":{
         message:Message.token_not_found

@@ -2,3 +2,4 @@ node_modules
 api.http
 .env
 swagger.yaml
+./src/v1/databases
