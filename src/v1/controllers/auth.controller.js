@@ -83,13 +83,13 @@ var that  = module.exports = {
         expires: new Date(Date.now() + Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND)),
         httpOnly: true,
         secure: true,
-        sameSite: false
+        sameSite: "none"
       })
       res.cookie('refresh_token', data.refresh_token, {
         expires: new Date(Date.now() + Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED)),
         httpOnly: true,
         secure: true,
-        sameSite: false
+        sameSite: "none"
       })
       res.redirect(`${process.env.CLIENT_ENDPOINT}/auth/login`)
     } catch (error) {

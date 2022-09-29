@@ -17,6 +17,7 @@ app.use(cors({
     origin:['http://localhost:3000','https://admin-page-6vbf.vercel.app'],
     credentials: true
 }))
+app.set("trust-proxy",1)
 app.use(helmet())
 app.use(morgan('combined'))
 // compress responses
