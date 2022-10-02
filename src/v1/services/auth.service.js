@@ -1,7 +1,8 @@
 const Message = require('../lang/en')
 const userModel = require('../models/users.model')
 const adminModel = require('../models/admins.model')
-const utils = require('../utils')
+const {handlerRequest, errorResponse} = require('../utils')
+const bcrypt = require('bcrypt')
 const _ = require('lodash')
 const redis = require('../databases/init.redis')
 const createError = require('http-errors')
@@ -9,6 +10,8 @@ const jwtService = require('./jwt.service')
 const qs = require('qs')
 const axios = require('axios')
 const { v4: uuidv4 } = require('uuid');
+const otpGenerator = require('otp-generators')
+
 var that = module.exports = {
   userRegister: (user) => {
     return new Promise(async (resolve, reject)=> {
@@ -31,30 +34,62 @@ var that = module.exports = {
           }
         })
       }
-      const createUser = new userModel({
-        local:{
-          email:user.email,
-          password:user.password,
-          verifyToken: uuidv4()
-        },
-        name:user.name,
-        gender:user.gender
-      })
-      const [err, data] = await utils.handlerRequest(createUser.save())
-      if(err){
-        console.log(err)
-        return reject({
-          status:500,
-          "errors":{
-            message: createError[500]
+      //when google is existed
+      const verifyToken = uuidv4()
+      const salt = await bcrypt.genSalt(10)
+      const hashPassword = await bcrypt.hash(user.password, salt)
+      let err, data
+        [err, data] = await handlerRequest(userModel.findOneAndUpdate(
+        {"google.email":user.email},
+        {$set:{
+            "local.email":user.email,
+            "local.password":hashPassword,
+            "local.verifyToken":verifyToken,
+            name:user.name,
+            gender:user.gender  
+          }
+        },{
+          new: true
+        }
+      ))
+      if(err) {
+        return reject(errorResponse(500, createError[500]))
+      }
+      if(_.isEmpty(data)){
+        
+        [err, data] = await handlerRequest(
+          new userModel({
+            local:{
+              email:user.email,
+              password:user.password,
+              verifyToken: verifyToken
+            },
+            name:user.name,
+            gender:user.gender
+          }).save()  
+        )
+        if(err){
+          console.log(err)
+          return reject(errorResponse(500, createError[500]))
+        }
+        redis.publish('send_mail',JSON.stringify({
+          email: data.local.email,
+          _id:data._id,
+          verifyToken:data.local.verifyToken,
+          name: data.name
+        }))
+        return resolve({
+          status:200,
+          data:{
+            message: Message.register_success
           }
         })
       }
       redis.publish('send_mail',JSON.stringify({
-        email: data.local.email,
+        email: user.email,
         _id:data._id,
-        verifyToken:data.local.verifyToken,
-        name: data.name
+        verifyToken:verifyToken,
+        name: user.name
       }))
       return resolve({
         status:200,
@@ -62,6 +97,7 @@ var that = module.exports = {
           message: Message.register_success
         }
       })
+      
     })
   },
   userLogin: (email, password) => {
@@ -85,34 +121,17 @@ var that = module.exports = {
         const user = new userModel({"local.password": account.local.password})
         const checkPassword = await user.isCheckPassword(password)
         if(!checkPassword){
-          return reject({
-            status:401,
-            "errors": {
-              "field": null,
-              "message": Message.login_wrong
-            }
-          })
+          return reject(errorResponse(401, Message.login_wrong))
         }
         
         if(!account.local.verified){
-          return reject({
-            status: 401,
-            "errors": {
-              "field": null,
-              "message": Message.account_inactive
-            }
-          })
+          return reject(errorResponse(401, Message.account_inactive))
         }
+
         if(account.status === "blocked"){
-          return reject({
-            status: 401,
-            "errors": {
-              "field": null,
-              "message":Message.account_locked
-            }
-          })
+          return reject(errorResponse(401, Message.account_locked))
         }
-        
+
         if(account.role === "user"){
           const payload = {
             _id: account._id,
@@ -134,14 +153,8 @@ var that = module.exports = {
             })  
           } catch (error) {
             console.log(error)
-            return reject({
-              status: 400,
-              "errors":{
-                message:error
-              }
-            })
+            return reject(errorResponse(401, error))
           }
-          
         }
         const payload = {
           _id: account._id,
@@ -163,12 +176,7 @@ var that = module.exports = {
         })
       } catch (error) {
         console.log(error)
-        return reject({
-          status:400,
-          "errors":{
-            message: createError.InternalServerError()
-          }
-        })
+        return reject(errorResponse(500, createError.InternalServerError()))
       }
     })
   },
@@ -189,12 +197,7 @@ var that = module.exports = {
         try {
           const existed = await userModel.findOne({"local.verifyToken": token})
           if(_.isEmpty(existed)){
-            return reject({
-              status:400,
-              "errors":{
-                message:Message.verify_token_not_match
-              }
-            })
+            return reject(errorResponse(400, Message.verify_token_not_match))
           }
           await userModel.findOneAndUpdate(
             { "local.verifyToken": token },
@@ -207,12 +210,7 @@ var that = module.exports = {
           })
         } catch (error) {
           console.log(error)
-          return reject({
-            status: 400,
-            "errors":{
-              message: Message.server_wrong
-            }
-          })
+          return reject(errorResponse(400, Message.server_wrong))
         }
     })
   },
@@ -236,12 +234,7 @@ var that = module.exports = {
         return resolve(data)
       } catch (error) {
         console.log(error.response.data.error)
-        return reject({
-          status:400,
-          "errors":{
-            message:error.response.data.error
-          }
-        })
+        return reject(errorResponse(400, error.response.data.error))
       }
     })
   },
@@ -258,12 +251,7 @@ var that = module.exports = {
         return resolve(data)
       } catch (error) {
         console.log(error.response.data.error)
-        return reject({
-          status:400,
-          "errors":{
-            "message":error.response.data.error
-          }
-        })
+        return reject(errorResponse(400, error.response.data.error))
       }
     })
   },
@@ -316,24 +304,13 @@ var that = module.exports = {
             })  
           } catch (error) {
             console.log(error)
-            return reject({
-              status: 400,
-              "errors":{
-                message:error
-              }
-            })
+            return reject(errorResponse(400, error))
           }
         }
         
         //account is existed
         if(accountExisted.status === "blocked"){
-          return reject({
-            status: 201,
-            "errors": {
-              "field": null,
-              "message":Message.account_locked
-            }
-          })
+          return reject(errorResponse(401, Message.account_locked))
         }
         const updatedAccount = await userModel.findOneAndUpdate({
           $or:[
@@ -374,12 +351,7 @@ var that = module.exports = {
             })  
           } catch (error) {
             console.log(error)
-            return reject({
-              status: 400,
-              "errors":{
-                message:error
-              }
-            })
+            return reject(errorResponse(400, error))
           }
           
         }
@@ -403,12 +375,131 @@ var that = module.exports = {
         })
       } catch (error) {
         console.log(error)
-        return reject({
-          status:400,
-          "errors":{
-            message:error
+        return reject(errorResponse(400, error))
+      }
+    })
+  },
+  sendEmailResetPassword: (email, page) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const getUser = await userModel.findOne({
+          "local.email":email
+        })
+        if(_.isEmpty(getUser)){
+          return reject({
+            status: 400,
+            "errors":{
+              message:Message.email_not_exists
+            }
+          })
+        }
+        if(!getUser.local.verified) {
+          return reject(errorResponse(400, Message.account_inactive))
+        }
+        if(page === 'user'){
+          if(!(getUser.role === 'user')) {
+            return reject(errorResponse(400, Message.page_unauthorized))
+          }
+          const otp = otpGenerator.generate(6, { 
+            upperCaseAlphabets: false, 
+            specialChars: false,
+            upperCaseAlphabets:false 
+          })
+          await userModel.updateOne({
+            "local.email":email
+          },{
+            $set:{
+              "local.verifyCode": Number(otp)
+            }
+          })
+          return resolve({
+            data:{
+              message:Message.send_mail_reset_success
+            }
+          })
+        }
+        //seller
+        const otp = otpGenerator.generate(6,
+        { alphabets: false, upperCase: false, specialChar: false })
+        const updated = await userModel.updateOne({
+          "local.email":email
+        },{
+          $set:{
+            "local.verifyCode": Number(otp)
           }
         })
+        console.log(updated)
+        redis.publish('send_otp_reset_password',JSON.stringify({
+          email: email,
+          otp:otp
+        }))
+        return resolve({
+          data:{
+            message:Message.send_mail_reset_success
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, error))
+      }
+    })
+  },
+  OTPCode: (otp) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const existed = await userModel.findOne({
+          "local.verifyCode":otp
+        })
+        if(_.isEmpty(existed)){
+          return reject(errorResponse(400, Message.otp_invalid))
+        }
+        const verifyToken = uuidv4()
+        await userModel.updateOne({
+          "local.verifyCode":otp
+        },{
+          $set:{
+            "local.verifyCode":null,
+            "local.verifyToken": verifyToken
+          }
+        })
+        return resolve({
+          data:{
+            token:verifyToken
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, error))   
+      }
+    })
+  },
+  resetPassword: (token, password) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const existed = await userModel.findOne({
+          "local.verifyToken": token
+        })
+        if(_.isEmpty(existed)){
+          return reject(errorResponse(400, Message.token_invalid))
+        }
+        const salt = await bcrypt.genSalt(10)
+        const hashPassword = await bcrypt.hash(password, salt)
+        await userModel.updateOne({
+          "local.verifyToken":token
+        },{
+          $set:{
+            "local.verifyToken": null,
+            "local.password":hashPassword
+          }
+        })
+        return resolve({
+          data:{
+            message:Message.reset_password_success
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, error))
       }
     })
   }

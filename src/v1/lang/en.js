@@ -12,6 +12,19 @@ module.exports = {
   "login_wrong":"Email or Password is wrong",
   "token_not_found":"Please login again",
   "verify_token_not_match":"token is invalid, please try again",
-  "logout_success":"Logout is success"
-  
+  "logout_success":"Logout is success",
+  "email_required":"Email is required",
+  "email_invalid":"Email is not valid",
+  "password_required":"password is required",
+  "password_invalid":"Password must be 8-16 characters and contain both numbers and letters characters",
+  "name_required":"Name is required",
+  "name_invalid":"Name must be less than 32 characters long",
+  "gender_required":"Gender is required",
+  "gender_invalid":"Gender must be less than 15 characters long",
+  "email_not_exists":"Email is not sign up",
+  "page_unauthorized":"Sorry!, Page only spend for seller and admin",
+  "send_mail_reset_success":"OTP is sent to your email, please check your email!",
+  "otp_invalid":"OTP is invalid, please try again!",
+  "token_invalid":"Token is invalid, please try again",
+  "reset_password_success":"Reset password is success, please login again"
 }

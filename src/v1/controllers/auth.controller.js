@@ -1,29 +1,22 @@
-const authService = require('../services/auth.service')
 const JWT = require('jsonwebtoken')
+const xssFilter = require('xss-filters')
+const authService = require('../services/auth.service')
 const jwtService = require('../services/jwt.service')
 const redis = require('../databases/init.redis')
+const createError = require('http-errors')
+const { setCookies } = require('../utils')
 const Message = require('../lang/en')
 var that  = module.exports = {
   userLogin: async (req, res) => {
-    console.log(req.body)
     const { email, password } = req.body
     try {
-      const {data, access_token, refresh_token} = await authService.userLogin(email, password)
-      res.cookie('access_token', access_token, {
-        expires: new Date(Date.now() + Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND)),
-        httpOnly: true,
-        secure: true
-      })
-      .cookie('refresh_token', refresh_token, {
-        expires: new Date(Date.now() + Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED)),
-        httpOnly: true,
-        secure: true
-      })
-      .send({
+      const {data, access_token, refresh_token} = await authService.userLogin(xssFilter.inHTMLData(email), password)
+      setCookies(res, 'access_token', access_token, Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND))
+      setCookies(res, 'refresh_token', refresh_token, Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED))
+      res.send({
         data,
         access_token
-      })
-      
+      }) 
     } catch (error) {
       console.log(error)
       res.status(error.status).json(error)
@@ -31,14 +24,18 @@ var that  = module.exports = {
   },
   userRegister: async (req, res) => {
     const user = req.body
+  
     try {
-      const data = await authService.userRegister(user) 
-      res
-      .cookie('active_account', false,
+      const data = await authService.userRegister({
+        email:xssFilter.inHTMLData(user.email),
+        password:user.password,
+        name:xssFilter.inHTMLData(user.name),
+        gender:xssFilter.inHTMLData(user.gender)
+      }) 
+      res.cookie('active_account', false,
       {
         httpOnly: false,
         maxAge:Number(process.env.ACTIVE_ACCOUNT_COOKIE_EXPIRED),
-        secure:true
       })
       .json(data)
     } catch (error) {
@@ -78,21 +75,11 @@ var that  = module.exports = {
       const { id_token, access_token } = await authService.getGoogleOAuthTokens(code)
       const googleUser = await authService.getGoogleUser(id_token, access_token)
       const data = await authService.googleLogin(googleUser)
-      console.log(data)
-      res.cookie('access_token', data.access_token, {
-        expires: new Date(Date.now() + Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND)),
-        httpOnly: true,
-        secure: true,
-        sameSite: "none"
-      })
-      res.cookie('refresh_token', data.refresh_token, {
-        expires: new Date(Date.now() + Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED)),
-        httpOnly: true,
-        secure: true,
-        sameSite: "none"
-      })
+      setCookies(res,'access_token', data.access_token, Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND))
+      setCookies(res,'refresh_token', data.refresh_token, Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED))
       res.redirect(`${process.env.CLIENT_ENDPOINT}/auth/login`)
     } catch (error) {
+      console.log(error)
       res.status(error.status).json(error)
     }
   },
@@ -115,19 +102,11 @@ var that  = module.exports = {
         const token = await jwtService.signAccessToken(payload)
         const refreshToken = await jwtService.signRefreshToken(payload)
         await redis.del(refresh_token)
-        res.cookie('access_token', token, {
-          expires: new Date(Date.now() + Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND)),
-          httpOnly: true,
-          secure: true
-        })
-        res.cookie('refresh_token', refreshToken, {
-          expires: new Date(Date.now() + Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED)),
-          httpOnly: true,
-          secure: true
-        })
+        setCookies(res,'access_token', token,Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND))
+        setCookies(res, 'refresh_token', refreshToken, Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED))
         res.json({data:payload, access_token:token})
       } catch (error) {
-        console.log("erro:::",error)
+        console.log(error)
         res.status(400).json({
           status: 400,
           "errors":{
@@ -139,7 +118,6 @@ var that  = module.exports = {
   },
   getCurrentUser: (req, res) => {
     const access_token = req.cookies.access_token
-    console.log(access_token)
     if(access_token){
       JWT.verify(access_token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => {
         if(err){
@@ -173,11 +151,12 @@ var that  = module.exports = {
   },
   logout:async (req, res) => {
     try {
+      console.log('herehrherhehrehrhe')
       const refresh_token = req.cookies.refresh_token
       await redis.del(refresh_token)
       res.clearCookie('access_token')
       res.clearCookie('refresh_token')
-      res.end({
+      res.send({
         data:{
           message: Message.logout_success
         }
@@ -190,6 +169,36 @@ var that  = module.exports = {
           message:Message.server_wrong
         }
       })
+    }
+  },
+  emailResetPassword:async (req, res) => {
+      const {email} = req.body
+      try {
+        const payload = await authService.sendEmailResetPassword(email, "seller")
+        console.log(payload)
+        res.json(payload)
+      } catch (error) {
+        res.status(error.status).json(error)
+      }
+  },
+  OTPCodeResetPassword:async (req, res) => {
+    const {otp} = req.body
+    try {
+      const payload = await authService.OTPCode(Number(otp))
+      console.log(payload)
+      res.json(payload)
+    } catch (error) {
+      res.status(error.status).json(error)
+    }
+  },
+  resetPassword: async (req, res) => {
+    const {token, password} = req.body
+    try {
+      const payload = await authService.resetPassword(token, password)
+      console.log(payload)
+      res.json(payload)
+    } catch (error) {
+      res.status(error.status).json(error)
     }
   }
 }
