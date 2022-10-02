@@ -151,11 +151,11 @@ var that  = module.exports = {
   },
   logout:async (req, res) => {
     try {
-      console.log('herehrherhehrehrhe')
       const refresh_token = req.cookies.refresh_token
-      await redis.del(refresh_token)
-      res.clearCookie('access_token')
-      res.clearCookie('refresh_token')
+      const x = await redis.del(refresh_token)
+      console.log(x)
+      setCookies(res,'access_token', null,0)
+      setCookies(res, 'refresh_token', null, 0)
       res.send({
         data:{
           message: Message.logout_success
