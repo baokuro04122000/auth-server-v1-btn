@@ -1,9 +1,10 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
 const userSchema = new mongoose.Schema({
-  gender:{type:String,default:"male"},
-  phone:{type:String,default:null},
-  address:{type:String,default:null},
+  contact:{
+    address: {type: String, min:3, max:50},
+    phone:{type:String,default:null, min:10, max:11}
+  },
   local: {
     email:{
       type: String, 
@@ -23,11 +24,14 @@ const userSchema = new mongoose.Schema({
     email:{type: String, trim:true, unique:true, index:true},
     picture:{type:String}
   },
-  name:{
-    type: String
-  },
-  profilePicture: {
-    type: String
+  info:{
+    firstName:{type: String, min:2, max:30, required:true},
+    lastName:{type:String, min:2, max:30, required:true},
+    nickName:{type:String, min:2, max:50, default:''},
+    gender:{type:String, min:3, max:15},
+    birthDay:{type:String, min:6, max:8},
+    language:{type:String, enum:['en', 'vi'], default:'en'},
+    avatar:{type:String}
   },
   status: {
     type: String, 
@@ -43,6 +47,7 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Seller'
   },
+  verifyCodeSeller:{type:String, default:null},
   meta: {
     totalBuy:{
       type: Number, 
@@ -53,7 +58,7 @@ const userSchema = new mongoose.Schema({
       default: 0
     },
   },
-  special:{
+  specs:{
     type: Array,  
     default: []
   }
@@ -83,4 +88,4 @@ userSchema.methods.isCheckPassword = async function(password){
   }
 }
 
-module.exports = mongoose.model('Users', userSchema)
+module.exports = mongoose.model('users', userSchema)

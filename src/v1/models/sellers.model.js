@@ -20,8 +20,7 @@ const sellerSchema = new Schema({
       default: "normal"
     },
     proof:{
-      type: Array, 
-      required: true, 
+      type: Array,
       default:[]
     },
     meta: {
@@ -42,10 +41,15 @@ const sellerSchema = new Schema({
         default: 0
       },
       title: {
-        type:String, 
-        required: false
+        type:String
       }
     },
+    socialLinks:{
+      facebook:{type: String,min:10, max:150},
+      instagram:{type: String, min:10, max:150},
+      youtube:{type:String, min:10, max:150}
+    },
+    specs:{type:Array, default:[]},
     isDisabled: false
 }
 ,{
@@ -54,4 +58,4 @@ const sellerSchema = new Schema({
 })
 
 
-module.exports = model('Sellers', sellerSchema)
+module.exports = model('sellers', sellerSchema)

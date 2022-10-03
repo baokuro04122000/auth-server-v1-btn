@@ -13,7 +13,7 @@ const { v4: uuidv4 } = require('uuid');
 const otpGenerator = require('otp-generators')
 
 var that = module.exports = {
-  userRegister: (user) => {
+  userRegisterWeb: (user) => {
     return new Promise(async (resolve, reject)=> {
       const checkExisted = await userModel.findOne({
         $or:[
@@ -45,8 +45,9 @@ var that = module.exports = {
             "local.email":user.email,
             "local.password":hashPassword,
             "local.verifyToken":verifyToken,
-            name:user.name,
-            gender:user.gender  
+            "info.firstName":user.firstName,
+            "info.lastName":user.lastName,
+            "info.gender":user.gender 
           }
         },{
           new: true
@@ -64,8 +65,11 @@ var that = module.exports = {
               password:user.password,
               verifyToken: verifyToken
             },
-            name:user.name,
-            gender:user.gender
+            info:{
+              firstName:user.firstName,
+              lastName:user.lastName,
+              gender:user.gender
+            }
           }).save()  
         )
         if(err){
@@ -100,6 +104,87 @@ var that = module.exports = {
       
     })
   },
+  userRegisterMobile: (user) => {
+    return new Promise(async (resolve, reject)=> {
+      const checkExisted = await userModel.findOne({
+        $or:[
+          {$and:[
+            {"local.email": user.email},
+            {"google.email":user.email}
+          ]},
+          {"local.email": user.email}
+        ]
+      }) 
+      // when account is existed in database
+      if(!_.isEmpty(checkExisted)) {
+        return reject(errorResponse(400, Message.email_existed))
+      }
+      //when google is existed
+      const otp = otpGenerator.generate(6,
+        { alphabets: false, upperCase: false, specialChar: false })
+      const salt = await bcrypt.genSalt(10)
+      const hashPassword = await bcrypt.hash(user.password, salt)
+      let err, data
+        [err, data] = await handlerRequest(userModel.findOneAndUpdate(
+        {"google.email":user.email},
+        {$set:{
+            "local.email":user.email,
+            "local.password":hashPassword,
+            "local.verifyCode":Number(otp),
+            "info.firstName":user.firstName,
+            "info.lastName":user.lastName,
+            "info.gender":user.gender 
+          }
+        },{
+          new: true
+        }
+      ))
+      if(err) {
+        return reject(errorResponse(500, createError[500]))
+      }
+      if(_.isEmpty(data)){
+        [err, data] = await handlerRequest(
+          new userModel({
+            local:{
+              email:user.email,
+              password:user.password,
+              verifyCode: Number(otp)
+            },
+            info:{
+              firstName:user.firstName,
+              lastName:user.lastName,
+              gender:user.gender
+            }
+          }).save()
+        )
+        if(err){
+          console.log(err)
+          return reject(errorResponse(500, createError[500]))
+        }
+        
+        redis.publish('send_otp_register_mobile',JSON.stringify({
+          email: user.email,
+          otp:otp
+        }))
+        return resolve({
+          data:{
+            message: Message.register_success
+          }
+        })
+      }
+      redis.publish('send_otp_register_mobile',JSON.stringify({
+        email: email,
+        otp:otp
+      }))
+      return resolve({
+        data:{
+          message: Message.register_success
+        }
+      })
+      
+    })
+  }
+  ,
   userLogin: (email, password) => {
     return new Promise(async (resolve, reject)=> {
       try {
@@ -135,9 +220,10 @@ var that = module.exports = {
         if(account.role === "user"){
           const payload = {
             _id: account._id,
-            email:account.local.email,
-            name: account.name,
-            profilePicture: account.profilePicture,
+            nickName: account.info.nickName,
+            firstName:account.info.firstName,
+            lastName:account.info.lastName,
+            profilePicture: account.info.avatar,
             role: account.role,
             meta:account.meta,
             special:account.special,
@@ -159,8 +245,10 @@ var that = module.exports = {
         const payload = {
           _id: account._id,
           email:account.local.email,
-          name: account.name,
-          profilePicture: account.profilePicture,
+          nickName: account.info.nickName,
+          firstName:account.info.firstName,
+          lastName:account.info.lastName,
+          profilePicture: account.info.avatar,
           role: account.role,
           meta:account.meta,
           seller:account.seller,
@@ -318,11 +406,11 @@ var that = module.exports = {
             {"local.email":googleUser.email}
           ]
         },{
-          google:{
-            uid:googleUser.id,
-            email:googleUser.email,
-            picture:googleUser.picture,
-            name:googleUser.name
+          $set:{
+            "google.uid":googleUser.id,
+            "google.email":googleUser.email,
+            "google.picture":googleUser.picture,
+            "google.name":googleUser.name
           }
         },
         {
@@ -428,7 +516,6 @@ var that = module.exports = {
             "local.verifyCode": Number(otp)
           }
         })
-        console.log(updated)
         redis.publish('send_otp_reset_password',JSON.stringify({
           email: email,
           otp:otp
@@ -500,6 +587,35 @@ var that = module.exports = {
       } catch (error) {
         console.log(error)
         return reject(errorResponse(500, error))
+      }
+    })
+  },
+  OTPCodeMobile: (email,otp) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const existed = await userModel.findOneAndUpdate({
+          $and:[
+            {"local.verifyCode":otp},
+            {"local.email":email}
+          ]
+        },{
+          $set:{
+            "local.verified":true,
+            "local.verifyCode":null
+          }
+        })
+        if(_.isEmpty(existed)){
+          return reject(errorResponse(400, Message.otp_invalid))
+        }
+        // temporary...
+        return resolve({
+          data:{
+            message:Message.active_success
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, error))   
       }
     })
   }

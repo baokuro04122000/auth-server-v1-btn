@@ -26,5 +26,7 @@ module.exports = {
   "send_mail_reset_success":"OTP is sent to your email, please check your email!",
   "otp_invalid":"OTP is invalid, please try again!",
   "token_invalid":"Token is invalid, please try again",
-  "reset_password_success":"Reset password is success, please login again"
+  "reset_password_success":"Reset password is success, please login again",
+  "otp_required":"OTP is required",
+  "otp_invalid_format":"Format is not valid"
 }

@@ -22,22 +22,39 @@ var that  = module.exports = {
       res.status(error.status).json(error)
     }
   },
-  userRegister: async (req, res) => {
+  userRegisterWeb: async (req, res) => {
     const user = req.body
   
     try {
-      const data = await authService.userRegister({
+      const data = await authService.userRegisterWeb({
         email:xssFilter.inHTMLData(user.email),
         password:user.password,
-        name:xssFilter.inHTMLData(user.name),
-        gender:xssFilter.inHTMLData(user.gender)
-      }) 
+        firstName:xssFilter.inHTMLData(user.firstName),
+        gender:xssFilter.inHTMLData(user.gender),
+        lastName:xssFilter.inHTMLData(user.lastName)
+      })
       res.cookie('active_account', false,
       {
         httpOnly: false,
         maxAge:Number(process.env.ACTIVE_ACCOUNT_COOKIE_EXPIRED),
       })
       .json(data)
+    } catch (error) {
+      res.status(error.status).json(error)
+    }
+  },
+  userRegisterMobile: async (req, res) => {
+    const user = req.body
+    try {
+      const data = await authService.userRegisterMobile({
+        email:xssFilter.inHTMLData(user.email),
+        password:user.password,
+        firstName:xssFilter.inHTMLData(user.firstName),
+        gender:xssFilter.inHTMLData(user.gender),
+        lastName:xssFilter.inHTMLData(user.lastName)
+      })
+      console.log(data)
+      res.json(data)
     } catch (error) {
       res.status(error.status).json(error)
     }
@@ -196,6 +213,15 @@ var that  = module.exports = {
     try {
       const payload = await authService.resetPassword(token, password)
       console.log(payload)
+      res.json(payload)
+    } catch (error) {
+      res.status(error.status).json(error)
+    }
+  },
+  OTPCodeRegisterMobile: async (req, res) => {
+    const {email, otp} = req.body
+    try {
+      const payload = await authService.OTPCodeMobile(email,Number(otp))
       res.json(payload)
     } catch (error) {
       res.status(error.status).json(error)

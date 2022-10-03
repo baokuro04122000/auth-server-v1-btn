@@ -5,13 +5,16 @@ const {
   userRegisterSchema,
   userLoginSchema,
   userCheckEmail,
-  userCheckPassword
+  userCheckPassword,
+  otpCheckRegisterMobile
 } = require('../validations/user.validation')
 module.exports = authRouter= (router) => {
   router.post('/auth/admin-login', authController.adminLogin)
   //router.post('/auth/admin-register', authController.adminRegister)
   router.post('/auth/login',validation(userLoginSchema), authController.userLogin)
-  router.post('/auth/register',validation(userRegisterSchema), authController.userRegister)
+  router.post('/auth/register',validation(userRegisterSchema), authController.userRegisterWeb)
+  router.post('/auth/mobile-register',validation(userRegisterSchema), authController.userRegisterMobile)
+  router.post('/auth/otp-register', validation(otpCheckRegisterMobile), authController.OTPCodeRegisterMobile)
   router.get('/auth/refresh-token', authController.verifyRefreshToken)
   router.get('/auth/active-account', authController.activeAccount)
   router.get('/api/oauth/google', authController.googleLogin)
