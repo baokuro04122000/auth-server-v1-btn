@@ -1,7 +1,11 @@
 const Message = require('../lang/en')
 const userModel = require('../models/users.model')
+const sellerModel = require('../models/sellers.model')
 const adminModel = require('../models/admins.model')
-const {handlerRequest, errorResponse} = require('../utils')
+const {
+  handlerRequest,
+  errorResponse
+} = require('../utils')
 const bcrypt = require('bcrypt')
 const _ = require('lodash')
 const redis = require('../databases/init.redis')
@@ -80,7 +84,7 @@ var that = module.exports = {
           email: data.local.email,
           _id:data._id,
           verifyToken:data.local.verifyToken,
-          name: data.name
+          name: data.info.firstName + data.info.lastName
         }))
         return resolve({
           status:200,
@@ -164,7 +168,8 @@ var that = module.exports = {
         
         redis.publish('send_otp_register_mobile',JSON.stringify({
           email: user.email,
-          otp:otp
+          otp:otp,
+          name:user.firstName + user.lastName
         }))
         return resolve({
           data:{
@@ -174,7 +179,8 @@ var that = module.exports = {
       }
       redis.publish('send_otp_register_mobile',JSON.stringify({
         email: email,
-        otp:otp
+        otp:otp,
+        name:user.firstName + user.lastName
       }))
       return resolve({
         data:{
@@ -268,11 +274,100 @@ var that = module.exports = {
       }
     })
   },
-  sellerRegister:() => {
+  sellerRegisterRequest:(userId) => {
     return new Promise(async (resolve, reject) => {
+      try {
+        const token = uuidv4();
+        const user = await userModel.findOneAndUpdate({
+          "_id":userId
+        }, {
+          "verifyCodeSeller":token
+        })
+        if(_.isEmpty(user)){
+          return reject(errorResponse(404, Message.user_not_found))
+        }
+        console.log(user.verifyCodeSeller)
+        redis.publish('send_mail',JSON.stringify({
+          email: user.local.email,
+          _id:user._id,
+          verifyToken:token,
+          name: user.info.firstName + user.info.lastName,
+          type:"register_seller"
+        }))
+        return resolve({
+          data:{
+            message:Message.register_seller_send_mail
+          }
+        })
 
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, createError.InternalServerError()))
+      }
     })
   },
+  checkSellerRegisterRequest: (token) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const isExisted = await userModel.findOne({
+          "verifyCodeSeller":token
+        })
+        if(_.isEmpty(isExisted)){
+          return reject(errorResponse(400, Message.token_register_not_match))
+        }
+        return resolve({
+          data: {
+            message: Message.token_valid
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(400, createError.InternalServerError()))
+      }
+    })
+  },
+  sellerRegister: (seller) => {
+    return Promise(async (resolve, reject) => {
+      try {
+        const tokenValid = await userModel.findOne({
+          "verifyCodeSeller":token
+        })
+        if(_.isEmpty(tokenValid)){
+          return reject(errorResponse(400, Message.token_invalid))
+        }
+        const nameExisted = await sellerModel.findOne({
+          "info.name":seller.name
+        })
+        if(!_.isEmpty(nameExisted)){
+          return reject(errorResponse(400, Message.name_existed))
+        }
+        const sellerSave = new sellerModel({
+          info:{
+            name: seller.name,
+            phone: seller.phone,
+          },
+          slogan: seller.slogan,
+          logo:seller.logo,
+          proof:seller.proof
+        })
+        [err, data] = await handlerRequest(sellerSave.save())
+        if(err){
+          console.log(err)
+          return reject(errorResponse(500, createError.InternalServerError()))
+        }
+        console.log(data)
+        return resolve({
+          data:{
+            message: data.info.name + Message.seller_create_success
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(400, error))
+      }
+    })
+  }
+  ,
   loginAdmin: ({email, password}) => {
     return new Promise(async (resolve, reject) => {
       const checkExist = await adminModel.find({email})
@@ -518,7 +613,8 @@ var that = module.exports = {
         })
         redis.publish('send_otp_reset_password',JSON.stringify({
           email: email,
-          otp:otp
+          otp:otp,
+          name: getUser.info.firstName + getUser.info.lastName
         }))
         return resolve({
           data:{

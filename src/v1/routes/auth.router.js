@@ -6,7 +6,8 @@ const {
   userLoginSchema,
   userCheckEmail,
   userCheckPassword,
-  otpCheckRegisterMobile
+  otpCheckRegisterMobile,
+  sellerRegister
 } = require('../validations/user.validation')
 module.exports = authRouter= (router) => {
   router.post('/auth/admin-login', authController.adminLogin)
@@ -14,15 +15,20 @@ module.exports = authRouter= (router) => {
   router.post('/auth/login',validation(userLoginSchema), authController.userLogin)
   router.post('/auth/register',validation(userRegisterSchema), authController.userRegisterWeb)
   router.post('/auth/mobile-register',validation(userRegisterSchema), authController.userRegisterMobile)
+  router.post('/auth/check-seller-register-request', authController.checkSellerRegisterRequest)
+  router.post('/auth/seller-register',validation(sellerRegister), authController.sellerRegister)
   router.post('/auth/otp-register', validation(otpCheckRegisterMobile), authController.OTPCodeRegisterMobile)
+  
+  router.post('/auth/email-reset-password',validation(userCheckEmail), authController.emailResetPassword)
+  router.post('/auth/otp-reset-password',authController.OTPCodeResetPassword)
+  router.post('/auth/reset-password', validation(userCheckPassword), authController.resetPassword)
+  
+  router.get('/auth/seller-register-request', jwt.verifyAccessToken, authController.sellerRegisterRequest)
   router.get('/auth/refresh-token', authController.verifyRefreshToken)
   router.get('/auth/active-account', authController.activeAccount)
   router.get('/api/oauth/google', authController.googleLogin)
   router.get('/api/me', authController.getCurrentUser)
   router.get('/auth/logout',jwt.verifyAccessToken, authController.logout)
-  router.post('/auth/email-reset-password',validation(userCheckEmail), authController.emailResetPassword)
-  router.post('/auth/otp-reset-password',authController.OTPCodeResetPassword)
-  router.post('/auth/reset-password', validation(userCheckPassword), authController.resetPassword)
   router.get('/', (req, res)=>{
     console.log(req.cookies)
     res.json(req.cookies)

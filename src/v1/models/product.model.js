@@ -28,7 +28,10 @@ const productSchema = new Schema({
       trim: true
   },
   productPictures: [
-    {type: string}
+    {
+      link:{type: String},
+      fileId:{type: String}
+    }
   ],
   
   release_date: Date,

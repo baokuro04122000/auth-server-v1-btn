@@ -4,6 +4,7 @@ const authService = require('../services/auth.service')
 const jwtService = require('../services/jwt.service')
 const redis = require('../databases/init.redis')
 const createError = require('http-errors')
+const {errorResponse} = require('../utils')
 const { setCookies } = require('../utils')
 const Message = require('../lang/en')
 var that  = module.exports = {
@@ -66,13 +67,56 @@ var that  = module.exports = {
     } = req.body
     await authService.checkRole({email, password})
   },
-  sellerRegister: async (req, res) => {
-    const {
-      email,
-      password,
-      brand
-    } = req.body
+  sellerRegisterRequest: async (req, res) => {
+    if((req.payload.role === "user")){
+      try {
+        const data = await authService.sellerRegisterRequest(req.payload._id)
+        return res.json(data)
+      } catch (error) {
+        return res.status(error.status).json(error)
+      }
+    }
+    res.status(400).json(errorResponse(400, createError.Unauthorized()))    
   },
+  checkSellerRegisterRequest: async (req, res) => {
+    const {token} = req.body
+    try {
+      const data = await authService.checkSellerRegisterRequest(token)
+      res.json(data)
+    } catch (error) {
+      res.status(error.status).json(error)    
+    }
+  },
+  sellerRegister:async (req, res) => {
+    try {
+      const {
+        name,
+        phone,
+        fbLink,
+        inLink,
+        logo,
+        proof,
+        slogan,
+        token
+      } = req.body
+
+      const seller = {
+        name: xssFilter.inHTMLData(name),
+        phone: xssFilter.inHTMLData(phone),
+        slogan: xssFilter.inHTMLData(slogan),
+        fbLink: fbLink.trim() ?  xssFilter.inHTMLData(fbLink) : "",
+        inLink: inLink.trim() ? xssFilter.inHTMLData(inLink) : "",
+        logo: logo,
+        proof: proof,
+        token
+      }
+      const data = authService.sellerRegister(seller)
+      res.json(data)
+    } catch (error) {
+      res.status(error.status).json(error)
+    }
+  }
+  ,
   activeAccount: async (req, res) => {
     try {
       const {token} = req.query
@@ -109,12 +153,7 @@ var that  = module.exports = {
       if(err){
         return res.status(400).json(err)
       }
-      if(!(payload._id === checkRedis))  return res.status(400).json({
-        status:400,
-        "errors":{
-          message: Message.token_expired
-        }
-      })
+      if(!(payload._id === checkRedis))  return res.status(403).json(errorResponse(403,Message.token_expired))
       try {
         const token = await jwtService.signAccessToken(payload)
         const refreshToken = await jwtService.signRefreshToken(payload)
@@ -124,12 +163,7 @@ var that  = module.exports = {
         res.json({data:payload, access_token:token})
       } catch (error) {
         console.log(error)
-        res.status(400).json({
-          status: 400,
-          "errors":{
-            message:error
-          }
-        })
+        res.status(400).json(errorResponse(500, createError.InternalServerError()))
       }
     })
   },
