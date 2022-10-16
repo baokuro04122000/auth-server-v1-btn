@@ -15,6 +15,7 @@ const qs = require('qs')
 const axios = require('axios')
 const { v4: uuidv4 } = require('uuid');
 const otpGenerator = require('otp-generators')
+const { token } = require('morgan')
 
 var that = module.exports = {
   userRegisterWeb: (user) => {
@@ -327,10 +328,10 @@ var that = module.exports = {
     })
   },
   sellerRegister: (seller) => {
-    return Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         const tokenValid = await userModel.findOne({
-          "verifyCodeSeller":token
+          "verifyCodeSeller":seller.token
         })
         if(_.isEmpty(tokenValid)){
           return reject(errorResponse(400, Message.token_invalid))
@@ -341,21 +342,32 @@ var that = module.exports = {
         if(!_.isEmpty(nameExisted)){
           return reject(errorResponse(400, Message.name_existed))
         }
-        const sellerSave = new sellerModel({
-          info:{
-            name: seller.name,
-            phone: seller.phone,
-          },
-          slogan: seller.slogan,
-          logo:seller.logo,
-          proof:seller.proof
-        })
-        [err, data] = await handlerRequest(sellerSave.save())
+        
+        [err, data] = await handlerRequest(
+          new sellerModel({
+            userId:tokenValid._id,
+            info:{
+              name: seller.name,
+              phone: seller.phone,
+            },
+            slogan: seller.slogan,
+            logo:seller.logo,
+            proof:seller.proof
+          }).save()
+        )
         if(err){
           console.log(err)
           return reject(errorResponse(500, createError.InternalServerError()))
         }
-        console.log(data)
+        await userModel.findOneAndUpdate({
+          "verifyCodeSeller": seller.token,
+        }, {
+          $set:{
+            "verifyCodeSeller":null,
+            "seller":data._id,
+            "role":"seller"
+          }
+        })
         return resolve({
           data:{
             message: data.info.name + Message.seller_create_success

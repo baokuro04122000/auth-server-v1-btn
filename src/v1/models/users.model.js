@@ -45,7 +45,7 @@ const userSchema = new mongoose.Schema({
   },
   seller: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Seller'
+    ref: 'sellers'
   },
   verifyCodeSeller:{type:String, default:null},
   meta: {

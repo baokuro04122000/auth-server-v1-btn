@@ -7,7 +7,7 @@ var that = module.exports = {
     .email(Message.email_invalid),
     password: yup.string()
     .required(Message.password_required)
-    .matches(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/,Message.password_invalid),
+    .matches(/^(?=.*[a-z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}$/,Message.password_invalid),
     firstName: yup.string()
     .required()
     .max(30, Message.name_invalid),
@@ -46,6 +46,8 @@ var that = module.exports = {
     .max(6,Message.otp_invalid_format)
   }),
   sellerRegister: yup.object({
+    token: yup.string()
+    .required(Message.token_invalid),
     name: yup.string()
     .required(Message.name_required)
     .min(2, Message.name_min_invalid)

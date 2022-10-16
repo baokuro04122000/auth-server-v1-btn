@@ -15,9 +15,9 @@ var that = module.exports = {
     }
     try {
       const payload = await deleteFileList(fileList, token)
-      res.json(payload)
+      return res.json(payload)
     } catch (error) {
-      res.status(error.status).json(error)
+      return res.status(error.status).json(error)
     }    
   }
 }

@@ -1,6 +1,6 @@
 const {Schema, model} = require('mongoose')
 const sellerSchema = new Schema({
-    sellerId:{type:Schema.Types.ObjectId},
+    userId:{type:Schema.Types.ObjectId},
     info:{
       name:{
         type: String,
@@ -18,7 +18,7 @@ const sellerSchema = new Schema({
       ]
     },
     logo: {
-      link: {type: String, },
+      fileLink: {type: String, },
       fileId:{type: String, default: null}
     },
     slogan:{
@@ -32,7 +32,7 @@ const sellerSchema = new Schema({
     },
     proof:[
       {
-        link:{type: String},
+        fileLink:{type: String},
         fileId:{type: String}
       }
     ],

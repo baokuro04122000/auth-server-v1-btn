@@ -1,4 +1,5 @@
 const JWT = require('jsonwebtoken')
+const _ = require('lodash')
 const xssFilter = require('xss-filters')
 const authService = require('../services/auth.service')
 const jwtService = require('../services/jwt.service')
@@ -6,6 +7,7 @@ const redis = require('../databases/init.redis')
 const createError = require('http-errors')
 const {errorResponse} = require('../utils')
 const { setCookies } = require('../utils')
+
 const Message = require('../lang/en')
 var that  = module.exports = {
   userLogin: async (req, res) => {
@@ -104,15 +106,18 @@ var that  = module.exports = {
         name: xssFilter.inHTMLData(name),
         phone: xssFilter.inHTMLData(phone),
         slogan: xssFilter.inHTMLData(slogan),
-        fbLink: fbLink.trim() ?  xssFilter.inHTMLData(fbLink) : "",
-        inLink: inLink.trim() ? xssFilter.inHTMLData(inLink) : "",
-        logo: logo,
-        proof: proof,
+        fbLink: fbLink ?  xssFilter.inHTMLData(fbLink).trim() : "",
+        inLink: inLink ? xssFilter.inHTMLData(inLink).trim() : "",
+        logo: _.isEmpty(logo) ? {
+          link:"https://vn-live-01.slatic.net/p/mdc/03b895db9c7b85ae98973b0941d66696.jpg",
+        } : logo,
+        proof: proof ? proof : [],
         token
       }
-      const data = authService.sellerRegister(seller)
+      const data = await authService.sellerRegister(seller)
       res.json(data)
     } catch (error) {
+      console.log(error)
       res.status(error.status).json(error)
     }
   }

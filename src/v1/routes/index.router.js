@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authRouter = require('./auth.router')
-
+const uploadRouter = require('./upload.router')
 router.get('/checkstatus',async (req, res, next) => {
     try {
        
@@ -15,6 +15,6 @@ router.get('/checkstatus',async (req, res, next) => {
 })
 
 authRouter(router)
-
+uploadRouter(router)
 
 module.exports = router;

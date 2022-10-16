@@ -17,13 +17,14 @@ var that = module.exports = {
         redis.publish('delete_file_list',JSON.stringify({
           fileList
         }))
-        return resolve({
+        resolve({
           data:{
             message:Message.delete_file_list_success
           }
         })
       } catch (error) {
-        return reject(errorResponse(500, createError[500]))
+        console.log(error)
+        return reject(errorResponse(500, createError.InternalServerError()))
       }
     })
   }
