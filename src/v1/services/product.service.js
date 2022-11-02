@@ -14,7 +14,7 @@ var that = module.exports = {
         if(_.isEmpty(categoryExisted)){
           return reject(errorResponse(401, Message.category_not_exist))  
         }
-        await new productModel(product).save().lean()
+        await new productModel(product).save()
         return resolve({
           data:{
             message:Message.add_product_success
