@@ -4,7 +4,8 @@ const sellerModel = require('../models/sellers.model')
 const adminModel = require('../models/admins.model')
 const {
   handlerRequest,
-  errorResponse
+  errorResponse,
+  generateOtp
 } = require('../utils')
 const bcrypt = require('bcrypt')
 const _ = require('lodash')
@@ -31,13 +32,7 @@ var that = module.exports = {
       }) 
       // when account is existed in database
       if(!_.isEmpty(checkExisted)) {
-        return reject({
-          status:400,
-          "errors":{
-            "field":"email",
-            "message":Message.email_existed
-          }
-        })
+        return reject(errorResponse(400, Message.email_existed))
       }
       //when google is existed
       const verifyToken = uuidv4()
@@ -79,7 +74,7 @@ var that = module.exports = {
         )
         if(err){
           console.log(err)
-          return reject(errorResponse(500, createError[500]))
+          return reject(errorResponse(500, createError.InternalServerError().message))
         }
         redis.publish('send_mail',JSON.stringify({
           email: data.local.email,
@@ -88,7 +83,6 @@ var that = module.exports = {
           name: data.info.firstName + data.info.lastName
         }))
         return resolve({
-          status:200,
           data:{
             message: Message.register_success
           }
@@ -101,7 +95,6 @@ var that = module.exports = {
         name: user.name
       }))
       return resolve({
-        status:200,
         data:{
           message: Message.register_success
         }
@@ -125,8 +118,7 @@ var that = module.exports = {
         return reject(errorResponse(400, Message.email_existed))
       }
       //when google is existed
-      const otp = otpGenerator.generate(6,
-        { alphabets: false, upperCase: false, specialChar: false })
+      const otp = generateOtp(6)
       const salt = await bcrypt.genSalt(10)
       const hashPassword = await bcrypt.hash(user.password, salt)
       let err, data
@@ -145,7 +137,7 @@ var that = module.exports = {
         }
       ))
       if(err) {
-        return reject(errorResponse(500, createError[500]))
+        return reject(errorResponse(500, createError.InternalServerError().message))
       }
       if(_.isEmpty(data)){
         [err, data] = await handlerRequest(
@@ -164,7 +156,7 @@ var that = module.exports = {
         )
         if(err){
           console.log(err)
-          return reject(errorResponse(500, createError[500]))
+          return reject(errorResponse(500, createError.InternalServerError().message))
         }
         
         redis.publish('send_otp_register_mobile',JSON.stringify({
@@ -202,13 +194,7 @@ var that = module.exports = {
           })
         .populate('seller')
         if(_.isEmpty(account)){
-          return reject({
-            status: 401,
-            "errors": {
-              "field": null,
-              "message": Message.login_wrong
-            }
-          })
+          return reject(errorResponse(401, Message.login_wrong))
         }
         const user = new userModel({"local.password": account.local.password})
         const checkPassword = await user.isCheckPassword(password)
@@ -233,7 +219,7 @@ var that = module.exports = {
             profilePicture: account.info.avatar,
             role: account.role,
             meta:account.meta,
-            special:account.special,
+            special:account.specs,
             typeLogin:"local"
           }
           try {
@@ -246,7 +232,7 @@ var that = module.exports = {
             })  
           } catch (error) {
             console.log(error)
-            return reject(errorResponse(401, error))
+            return reject(errorResponse(401, createError.InternalServerError().message))
           }
         }
         const payload = {
@@ -259,7 +245,7 @@ var that = module.exports = {
           role: account.role,
           meta:account.meta,
           seller:account.seller,
-          special:account.special,
+          special:account.specs,
           typeLogin:"local"
         }
         const access_token = await jwtService.signAccessToken(payload)
@@ -271,7 +257,7 @@ var that = module.exports = {
         })
       } catch (error) {
         console.log(error)
-        return reject(errorResponse(500, createError.InternalServerError()))
+        return reject(errorResponse(500, createError.InternalServerError().message))
       }
     })
   },
@@ -303,7 +289,7 @@ var that = module.exports = {
 
       } catch (error) {
         console.log(error)
-        return reject(errorResponse(500, createError.InternalServerError()))
+        return reject(errorResponse(500, createError.InternalServerError().message))
       }
     })
   },
@@ -357,7 +343,7 @@ var that = module.exports = {
         )
         if(err){
           console.log(err)
-          return reject(errorResponse(500, createError.InternalServerError()))
+          return reject(errorResponse(500, createError.InternalServerError().message))
         }
         await userModel.findOneAndUpdate({
           "verifyCodeSeller": seller.token,
@@ -499,7 +485,7 @@ var that = module.exports = {
             })  
           } catch (error) {
             console.log(error)
-            return reject(errorResponse(400, error))
+            return reject(errorResponse(400, createError.InternalServerError().message))
           }
         }
         
@@ -546,7 +532,7 @@ var that = module.exports = {
             })  
           } catch (error) {
             console.log(error)
-            return reject(errorResponse(400, error))
+            return reject(errorResponse(400, createError.InternalServerError().message))
           }
           
         }
@@ -570,7 +556,7 @@ var that = module.exports = {
         })
       } catch (error) {
         console.log(error)
-        return reject(errorResponse(400, error))
+        return reject(errorResponse(400, createError.InternalServerError().message))
       }
     })
   },
@@ -614,8 +600,7 @@ var that = module.exports = {
           })
         }
         //seller
-        const otp = otpGenerator.generate(6,
-        { alphabets: false, upperCase: false, specialChar: false })
+        const otp = generateOtp(6)
         const updated = await userModel.updateOne({
           "local.email":email
         },{
@@ -635,7 +620,7 @@ var that = module.exports = {
         })
       } catch (error) {
         console.log(error)
-        return reject(errorResponse(500, error))
+        return reject(errorResponse(500, createError.InternalServerError().message))
       }
     })
   },
@@ -664,7 +649,7 @@ var that = module.exports = {
         })
       } catch (error) {
         console.log(error)
-        return reject(errorResponse(500, error))   
+        return reject(errorResponse(500, createError.InternalServerError().message))   
       }
     })
   },
@@ -694,7 +679,7 @@ var that = module.exports = {
         })
       } catch (error) {
         console.log(error)
-        return reject(errorResponse(500, error))
+        return reject(errorResponse(500, createError.InternalServerError().message))
       }
     })
   },
@@ -723,7 +708,7 @@ var that = module.exports = {
         })
       } catch (error) {
         console.log(error)
-        return reject(errorResponse(500, error))   
+        return reject(errorResponse(500, createError.InternalServerError().message))   
       }
     })
   }

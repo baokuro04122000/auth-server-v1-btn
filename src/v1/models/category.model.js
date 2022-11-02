@@ -3,8 +3,7 @@ const categorySchema = new mongoose.Schema(
     {
         name: {
             type: String,
-            required: true,
-            trim: true,
+            required: true
         },
         slug: {
             type: String,
@@ -13,8 +12,10 @@ const categorySchema = new mongoose.Schema(
             index:true
         },
         categoryImage: {
-            type: String
+            type: String,
+            default:""
         },
+        specs:{type: Array, default:[]},
         isDisabled: false
     },
     { 
@@ -22,5 +23,6 @@ const categorySchema = new mongoose.Schema(
       timestamps: true
      }
 );
+categorySchema.index({"specs.k":1, "specs.v":1})
 
 module.exports = mongoose.model("categories", categorySchema);

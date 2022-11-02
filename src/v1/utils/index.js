@@ -1,3 +1,4 @@
+const otpGenerator = require('otp-generators')
 module.exports = {
   handlerRequest : promise => {
     return promise.then( data => ([undefined, data]))
@@ -18,5 +19,9 @@ module.exports = {
         message
       }
     }
+  },
+  generateOtp: (characterLong) => {
+    return otpGenerator.generate(characterLong,
+      { alphabets: false, upperCase: false, specialChar: false })
   }
 } 

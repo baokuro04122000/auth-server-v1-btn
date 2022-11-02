@@ -150,12 +150,13 @@ var that  = module.exports = {
     }
   },
 
-  verifyRefreshToken :async (req,res) => {
+  refreshToken :async (req,res) => {
     const refresh_token = req.cookies.refresh_token
-    console.log(refresh_token)
     const checkRedis = await redis.get(refresh_token)
+    if(!checkRedis){return res.status(404).json(errorResponse(404,Message.refresh_token_not_expired))}
     JWT.verify(refresh_token, process.env.REFRESH_TOKEN_SECRET,async (err, payload) => {
       if(err){
+        console.log(err)
         return res.status(400).json(err)
       }
       if(!(payload._id === checkRedis))  return res.status(403).json(errorResponse(403,Message.token_expired))
@@ -168,7 +169,7 @@ var that  = module.exports = {
         res.json({data:payload, access_token:token})
       } catch (error) {
         console.log(error)
-        res.status(400).json(errorResponse(500, createError.InternalServerError()))
+        res.status(500).json(errorResponse(500, createError.InternalServerError()))
       }
     })
   },
@@ -177,16 +178,17 @@ var that  = module.exports = {
     if(access_token){
       JWT.verify(access_token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => {
         if(err){
+          console.log('err::',err)
           if(err.name === "JsonWebTokenError"){
-            return res.status(400).json({
-              status:400,
+            return res.status(409).json({
+              status:409,
               "errors":{
                 message:createError.Unauthorized()
               }
             })
           }
-          return res.status(400).json({
-            status:400,
+          return res.status(409).json({
+            status:409,
             "errors":{
               message:createError.Unauthorized(err.message)
             }

@@ -24,11 +24,13 @@ module.exports = authRouter= (router) => {
   router.post('/auth/reset-password', validation(userCheckPassword), authController.resetPassword)
   
   router.get('/auth/seller-register-request', jwt.verifyAccessToken, authController.sellerRegisterRequest)
-  router.get('/auth/refresh-token', authController.verifyRefreshToken)
+  router.get('/auth/refresh-token', authController.refreshToken)
   router.get('/auth/active-account', authController.activeAccount)
   router.get('/api/oauth/google', authController.googleLogin)
   router.get('/api/me', authController.getCurrentUser)
   router.get('/auth/logout',jwt.verifyAccessToken, authController.logout)
+  
+  
   router.get('/', (req, res)=>{
     console.log(req.cookies)
     res.json(req.cookies)

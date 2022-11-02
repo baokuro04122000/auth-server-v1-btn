@@ -5,7 +5,7 @@ const redis = require('../databases/init.redis')
 var that = module.exports = {
   signAccessToken : (payload) => {
     return new Promise( (resolve, reject) => {
-      if(payload.exp){
+      if(payload?.exp){
         delete payload['exp']
         delete payload['iat']
       }
@@ -26,7 +26,7 @@ var that = module.exports = {
   },
   signRefreshToken : (payload) => {
     return new Promise((resolve, reject) => {
-      if(payload.exp){
+      if(payload?.exp){
         delete payload['exp']
         delete payload['iat']
       }
@@ -37,7 +37,9 @@ var that = module.exports = {
       JWT.sign(payload, secret, options, (err, token) => {
         if(err) return reject({
           status:400,
-          message:err
+          errors:{
+            message: err
+          }
         })
         redis.set(token,payload._id.toString(),'EX',Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED)).then((data)=>{
           console.log("data:::",data)
