@@ -37,9 +37,8 @@ var that = module.exports = {
     .matches(/^(?=.*[a-z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}$/,Message.password_invalid)
   }),
   otpCheckRegisterMobile: yup.object({
-    email:yup.string()
-    .required(Message.email_required)
-    .email(Message.email_invalid),
+    userId:yup.string()
+    .required(Message.userId_required),
     otp: yup.string()
     .required(Message.otp_required)
     .min(5, Message.otp_invalid_format)

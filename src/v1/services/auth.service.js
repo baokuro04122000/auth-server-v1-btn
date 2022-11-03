@@ -2,6 +2,8 @@ const Message = require('../lang/en')
 const userModel = require('../models/users.model')
 const sellerModel = require('../models/sellers.model')
 const adminModel = require('../models/admins.model')
+const otpModel = require('../models/otp.model')
+const tokenModel = require('../models/token.model')
 const {
   handlerRequest,
   errorResponse,
@@ -16,7 +18,7 @@ const qs = require('qs')
 const axios = require('axios')
 const { v4: uuidv4 } = require('uuid');
 const otpGenerator = require('otp-generators')
-const { token } = require('morgan')
+
 
 var that = module.exports = {
   userRegisterWeb: (user) => {
@@ -117,6 +119,7 @@ var that = module.exports = {
       if(!_.isEmpty(checkExisted)) {
         return reject(errorResponse(400, Message.email_existed))
       }
+      
       //when google is existed
       const otp = generateOtp(6)
       const salt = await bcrypt.genSalt(10)
@@ -127,7 +130,6 @@ var that = module.exports = {
         {$set:{
             "local.email":user.email,
             "local.password":hashPassword,
-            "local.verifyCode":Number(otp),
             "info.firstName":user.firstName,
             "info.lastName":user.lastName,
             "info.gender":user.gender 
@@ -136,6 +138,7 @@ var that = module.exports = {
           new: true
         }
       ))
+       
       if(err) {
         return reject(errorResponse(500, createError.InternalServerError().message))
       }
@@ -158,29 +161,52 @@ var that = module.exports = {
           console.log(err)
           return reject(errorResponse(500, createError.InternalServerError().message))
         }
-        
+        try {
+          (await otpModel.find({user: data._id})).map((otp) => otp.remove())
+          const generatedOtp = await new otpModel({
+            user:data._id,
+            generatedOtp:otp
+           }).save()
+          redis.publish('send_otp_register_mobile',JSON.stringify({
+            email: user.email,
+            otp:otp,
+            name:user.firstName + user.lastName
+          }))
+          return resolve({
+            data:{
+              message: Message.register_success
+            },
+            userId: data._id
+          })
+        } catch (error) {
+          console.log(error)
+          return reject(errorResponse(500, createError.InternalServerError().message))
+        }
+      }
+      try {
+        (await otpModel.find({user: data._id})).map((otp) => otp.remove())
+        await new otpModel({
+          user:data._id,
+          generatedOtp:otp
+         }).save()
+
+
         redis.publish('send_otp_register_mobile',JSON.stringify({
           email: user.email,
           otp:otp,
           name:user.firstName + user.lastName
         }))
+        
         return resolve({
           data:{
             message: Message.register_success
-          }
+          },
+          userId: data._id
         })
-      }
-      redis.publish('send_otp_register_mobile',JSON.stringify({
-        email: email,
-        otp:otp,
-        name:user.firstName + user.lastName
-      }))
-      return resolve({
-        data:{
-          message: Message.register_success
-        }
-      })
-      
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, createError.InternalServerError().message))
+      }      
     })
   }
   ,
@@ -265,19 +291,28 @@ var that = module.exports = {
     return new Promise(async (resolve, reject) => {
       try {
         const token = uuidv4();
-        const user = await userModel.findOneAndUpdate({
-          "_id":userId
-        }, {
-          "verifyCodeSeller":token
-        })
+        
+        const user = await userModel.findOne({
+          _id: userId
+        }).lean()
+        
         if(_.isEmpty(user)){
+            return reject(errorResponse(404, Message.user_not_found))
+        }
+        
+        const createToken = await new tokenModel({
+          user: userId,
+          generatedToken: token
+        }).save()
+        
+        if(_.isEmpty(createToken)){
           return reject(errorResponse(404, Message.user_not_found))
         }
-        console.log(user.verifyCodeSeller)
+        
         redis.publish('send_mail',JSON.stringify({
           email: user.local.email,
           _id:user._id,
-          verifyToken:token,
+          verifyToken:createToken.generatedToken,
           name: user.info.firstName + user.info.lastName,
           type:"register_seller"
         }))
@@ -296,9 +331,9 @@ var that = module.exports = {
   checkSellerRegisterRequest: (token) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const isExisted = await userModel.findOne({
-          "verifyCodeSeller":token
-        })
+        const isExisted = await tokenModel.findOne({
+          generatedToken:token
+        }).lean()
         if(_.isEmpty(isExisted)){
           return reject(errorResponse(400, Message.token_register_not_match))
         }
@@ -316,22 +351,22 @@ var that = module.exports = {
   sellerRegister: (seller) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const tokenValid = await userModel.findOne({
-          "verifyCodeSeller":seller.token
+        const tokenValid = await tokenModel.findOne({
+            generatedToken: seller.token
         })
         if(_.isEmpty(tokenValid)){
           return reject(errorResponse(400, Message.token_invalid))
         }
         const nameExisted = await sellerModel.findOne({
           "info.name":seller.name
-        })
+        }).lean()
         if(!_.isEmpty(nameExisted)){
           return reject(errorResponse(400, Message.name_existed))
         }
         
         [err, data] = await handlerRequest(
           new sellerModel({
-            userId:tokenValid._id,
+            userId:tokenValid.user,
             info:{
               name: seller.name,
               phone: seller.phone,
@@ -346,14 +381,14 @@ var that = module.exports = {
           return reject(errorResponse(500, createError.InternalServerError().message))
         }
         await userModel.findOneAndUpdate({
-          "verifyCodeSeller": seller.token,
+          _id: tokenValid.user,
         }, {
           $set:{
-            "verifyCodeSeller":null,
             "seller":data._id,
             "role":"seller"
           }
         })
+        tokenValid.remove()
         return resolve({
           data:{
             message: data.info.name + Message.seller_create_success
@@ -376,14 +411,18 @@ var that = module.exports = {
   activeAccount: (token) => {
     return new Promise(async (resolve, reject) => {
         try {
-          const existed = await userModel.findOne({"local.verifyToken": token})
+          const existed = await tokenModel.findOne({generatedToken: token})
           if(_.isEmpty(existed)){
             return reject(errorResponse(400, Message.verify_token_not_match))
           }
           await userModel.findOneAndUpdate(
-            { "local.verifyToken": token },
-            {"local.verified": true, "local.verifyToken": null}
+            { $and:[
+              {_id: existed.user},
+              {"local.verified": {$ne: true}}
+            ] },
+            {"local.verified": true}
           )
+          existed.remove()
           return resolve({
             data:{
               message:Message.active_success
@@ -565,7 +604,7 @@ var that = module.exports = {
       try {
         const getUser = await userModel.findOne({
           "local.email":email
-        })
+        }).lean()
         if(_.isEmpty(getUser)){
           return reject({
             status: 400,
@@ -577,37 +616,12 @@ var that = module.exports = {
         if(!getUser.local.verified) {
           return reject(errorResponse(400, Message.account_inactive))
         }
-        if(page === 'user'){
-          if(!(getUser.role === 'user')) {
-            return reject(errorResponse(400, Message.page_unauthorized))
-          }
-          const otp = otpGenerator.generate(6, { 
-            upperCaseAlphabets: false, 
-            specialChars: false,
-            upperCaseAlphabets:false 
-          })
-          await userModel.updateOne({
-            "local.email":email
-          },{
-            $set:{
-              "local.verifyCode": Number(otp)
-            }
-          })
-          return resolve({
-            data:{
-              message:Message.send_mail_reset_success
-            }
-          })
-        }
-        //seller
-        const otp = generateOtp(6)
-        const updated = await userModel.updateOne({
-          "local.email":email
-        },{
-          $set:{
-            "local.verifyCode": Number(otp)
-          }
-        })
+        const otp = generateOtp(6);
+        (await otpModel.find({user: getUser._id})).map((value) => value.remove())
+        await new otpModel({
+          user: getUser._id,
+          generatedOtp: otp
+        }).save()
         redis.publish('send_otp_reset_password',JSON.stringify({
           email: email,
           otp:otp,
@@ -616,7 +630,8 @@ var that = module.exports = {
         return resolve({
           data:{
             message:Message.send_mail_reset_success
-          }
+          },
+          userId: getUser._id
         })
       } catch (error) {
         console.log(error)
@@ -624,28 +639,28 @@ var that = module.exports = {
       }
     })
   },
-  OTPCode: (otp) => {
+  OTPCode: (userId,otp) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const existed = await userModel.findOne({
-          "local.verifyCode":otp
+        const existed = await otpModel.findOne({
+          user: userId
         })
         if(_.isEmpty(existed)){
-          return reject(errorResponse(400, Message.otp_invalid))
+          return reject(errorResponse(400, Message.otp_expired))
         }
+        const valid = await existed.isCheckOtp(otp)
+        if(!valid) return reject(errorResponse(400, Message.otp_invalid))
         const verifyToken = uuidv4()
-        await userModel.updateOne({
-          "local.verifyCode":otp
-        },{
-          $set:{
-            "local.verifyCode":null,
-            "local.verifyToken": verifyToken
-          }
-        })
+        const createToken = await new tokenModel({
+          user: userId,
+          generatedToken: verifyToken
+        }).save()
+        existed.remove()
         return resolve({
           data:{
-            token:verifyToken
-          }
+            token:createToken.generatedToken
+          },
+          userId: userId
         })
       } catch (error) {
         console.log(error)
@@ -653,11 +668,14 @@ var that = module.exports = {
       }
     })
   },
-  resetPassword: (token, password) => {
+  resetPassword: (userId,token, password) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const existed = await userModel.findOne({
-          "local.verifyToken": token
+        const existed = await tokenModel.findOne({
+          $and: [
+            {user: userId},
+            {generatedToken: token}
+          ]
         })
         if(_.isEmpty(existed)){
           return reject(errorResponse(400, Message.token_invalid))
@@ -665,13 +683,13 @@ var that = module.exports = {
         const salt = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash(password, salt)
         await userModel.updateOne({
-          "local.verifyToken":token
+          _id: userId
         },{
           $set:{
-            "local.verifyToken": null,
             "local.password":hashPassword
           }
         })
+        existed.remove()
         return resolve({
           data:{
             message:Message.reset_password_success
@@ -683,24 +701,31 @@ var that = module.exports = {
       }
     })
   },
-  OTPCodeMobile: (email,otp) => {
+  OTPCodeMobile: (userId,otp) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const existed = await userModel.findOneAndUpdate({
-          $and:[
-            {"local.verifyCode":otp},
-            {"local.email":email}
-          ]
-        },{
-          $set:{
-            "local.verified":true,
-            "local.verifyCode":null
-          }
+        const existed = await otpModel.findOne({
+          user: userId
         })
+        
         if(_.isEmpty(existed)){
-          return reject(errorResponse(400, Message.otp_invalid))
+          return reject(errorResponse(400, Message.otp_expired))
         }
-        // temporary...
+        const valid = await existed.isCheckOtp(otp)
+        if(!valid) return reject(errorResponse(400, Message.otp_invalid))
+        const activated = await userModel.updateOne({
+          _id: userId          
+        }, {
+          $set:{
+            "local.verified": true
+          }
+        },{
+          new: true
+        })
+        if(_.isEmpty(activated)){
+          return reject(errorResponse(500, createError.InternalServerError().message))
+        }
+        existed.remove()
         return resolve({
           data:{
             message:Message.active_success

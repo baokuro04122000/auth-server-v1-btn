@@ -6,7 +6,7 @@ mongoose.connect(
  `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@cluster0.81ywfpz.mongodb.net/${process.env.MONGO_DB_NAME}?retryWrites=true&w=majority`,
    { 
     useNewUrlParser: true, 
-    autoIndex: false
+    autoIndex: true
  }).then( _ => console.log('Connected mongoose success!...'))
 .catch( err => console.error(`Error: connect:::`, err))
 

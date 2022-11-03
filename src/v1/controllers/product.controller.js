@@ -2,6 +2,8 @@ const createError = require('http-errors')
 const productService = require('../services/product.service')
 const _ = require('lodash')
 const {generateOtp} = require('../utils')
+const shortid = require("shortid");
+const slugify = require("slugify");
 var that = module.exports = {
   addProduct: async (req, res) => {
     const product = req.body
@@ -10,7 +12,7 @@ var that = module.exports = {
     try {
       const payload = await productService.addProduct({
         name: product.name,
-        slug : slug,
+        slug : `${slugify(product.name)}-${shortid.generate()}`,
         sellerId:req.payload.seller._id,
         price: product.price,
         discountPercent: product.discountPercent,

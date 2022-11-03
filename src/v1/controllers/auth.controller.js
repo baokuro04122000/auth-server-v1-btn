@@ -56,7 +56,6 @@ var that  = module.exports = {
         gender:xssFilter.inHTMLData(user.gender),
         lastName:xssFilter.inHTMLData(user.lastName)
       })
-      console.log(data)
       res.json(data)
     } catch (error) {
       res.status(error.status).json(error)
@@ -240,9 +239,10 @@ var that  = module.exports = {
       }
   },
   OTPCodeResetPassword:async (req, res) => {
-    const {otp} = req.body
+    const {userId, otp} = req.body
     try {
-      const payload = await authService.OTPCode(Number(otp))
+      const payload = await authService.OTPCode(userId,Number(otp))
+      console.log('here')
       console.log(payload)
       res.json(payload)
     } catch (error) {
@@ -250,9 +250,9 @@ var that  = module.exports = {
     }
   },
   resetPassword: async (req, res) => {
-    const {token, password} = req.body
+    const {userId,token, password} = req.body
     try {
-      const payload = await authService.resetPassword(token, password)
+      const payload = await authService.resetPassword(userId,token, password)
       console.log(payload)
       res.json(payload)
     } catch (error) {
@@ -260,9 +260,9 @@ var that  = module.exports = {
     }
   },
   OTPCodeRegisterMobile: async (req, res) => {
-    const {email, otp} = req.body
+    const {userId, otp} = req.body
     try {
-      const payload = await authService.OTPCodeMobile(email,Number(otp))
+      const payload = await authService.OTPCodeMobile(userId,Number(otp))
       res.json(payload)
     } catch (error) {
       res.status(error.status).json(error)

@@ -26,6 +26,8 @@
     "mongoose": "^6.5.4",
     "morgan": "^1.10.0",
     "otp-generators": "^1.0.3",
+    "shortid": "^2.2.16",
+    "slugify": "^1.6.5",
     "uuid": "^9.0.0",
     "winston": "^3.8.1",
     "xss-filters": "^1.2.7",

@@ -69,6 +69,8 @@ module.exports = {
   "product_sold":"The product has a buyer",
   "product_order":"The product is being ordered",
   "delete_success":"Deleting is success",
+  "userId_required":"User Id is required",
+  "otp_expired":"Otp is expired"
   
   
 }

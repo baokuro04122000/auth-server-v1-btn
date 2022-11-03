@@ -13,9 +13,7 @@ const userSchema = new mongoose.Schema({
       lowercase: true,
       index:true
     },
-    verifyToken:{type: String, expires:Number(process.env.VERIFY_TOKEN_EMAIL_EXPIRED), index:true},
     verified: {type: Boolean, default: false},
-    verifyCode:{type:Number, expires:Number(process.env.VERIFY_CODE_FORGOT_PASSWORD_EXPIRED), index: true},
     password:{type: String},
   },
   google:{
@@ -47,7 +45,6 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'sellers'
   },
-  verifyCodeSeller:{type:String, default:null},
   meta: {
     totalBuy:{
       type: Number, 
