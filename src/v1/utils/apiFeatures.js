@@ -5,18 +5,12 @@ class APIFeatures {
   }
 
   search() {
-    const keyword = this.queryStr.keyword
-        ?   {
-            $text:{$search:this.queryStr.keyword},
-            }
-        : {};
-             
-    
     const sellerId = this.queryStr.sellerId 
       ? {
         sellerId:this.queryStr.sellerId
       }
       : {}
+
     const categoryId = this.queryStr.categoryId
       ? {
         category: categoryId
@@ -25,22 +19,22 @@ class APIFeatures {
 
     const name = this.queryStr.name
       ? {
-        name: {$regex: this.queryStr.name, $option: "i"}
+        name: {$regex: this.queryStr.name, $options: "i"}
       }
       : {}
-    const description = this.queryStr.summary
+    const summary = this.queryStr.summary
       ? {
-        description: {$regex: this.queryStr.summary, $option: "i"}
+        summary: {$regex: this.queryStr.summary, $options: "i"}
       }
       : {}
     const searchNormal = {
         $or: [
             {...name},
-            {...description}
+            {...summary}
         ]
     }
 
-    this.query = this.query.find({ ...keyword, ...sellerId, ...searchNormal, ...categoryId });
+    this.query = this.query.find({...sellerId, ...searchNormal, ...categoryId });
     return this;
   }
 
@@ -48,7 +42,7 @@ class APIFeatures {
       const queryCopy = { ...this.queryStr };
 
       // Removing fields from the query
-      const removeFields = ["keyword", "limit", "curentPage", "sellerId", "categoryId", "name", "description"];
+      const removeFields = ["limit", "curentPage", "sellerId", "categoryId", "name", "summary"];
       removeFields.forEach((el) => delete queryCopy[el]);
 
       // Advance filter for price, ratings etc
@@ -62,7 +56,7 @@ class APIFeatures {
       return this;
   }
 
-  pagination(resPerPage) {
+  pagination(resPerPage = 10) {
       const currentPage = Number(this.queryStr.currentPage) || 1;
       const skip = resPerPage * (currentPage - 1);
 

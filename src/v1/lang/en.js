@@ -70,7 +70,8 @@ module.exports = {
   "product_order":"The product is being ordered",
   "delete_success":"Deleting is success",
   "userId_required":"User Id is required",
-  "otp_expired":"Otp is expired"
+  "otp_expired":"Otp is expired",
+  "category_not_products":"This category hasn't any product"
   
   
 }

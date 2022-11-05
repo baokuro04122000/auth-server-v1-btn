@@ -6,6 +6,35 @@ const createError = require('http-errors')
 const _ = require('lodash')
 const {errorResponse} = require('../utils')
 
+const convertSpecsInProduct = (product) => {
+  let specs = {}
+  product.specs.forEach(element => {
+    specs[element.k]= element.v
+  })
+  return specs
+}
+
+const productResponse = (product) => {
+  let specs = {}
+  product.specs.forEach(element => {
+    specs[element.k]= element.v
+  })
+  return {
+    _id: product._id,
+    name: product.name,
+    seller: product.sellerId,
+    slug:product.slug,
+    price:product.price,
+    discountPercent:product.discountPercent,
+    summary:product.summary,
+    description:product.description,
+    category: product.category,
+    quantity: product.quantity,
+    productPictures:product.productPictures,
+    specs:specs
+  }
+}
+
 var that = module.exports = {
   addProduct: (product) => {
     return new Promise(async (resolve, reject) => {
@@ -52,27 +81,7 @@ var that = module.exports = {
           return reject(errorResponse(404, Message.product_empty))
         }
         
-        const productPayload = products.map((product) => {
-          let specs = {}
-          product.specs.forEach(element => {
-            specs[element.k]= element.v
-          })
-          
-          return {
-            _id: product._id,
-            name: product.name,
-            seller: product.sellerId,
-            slug:product.slug,
-            price:product.price,
-            discountPercent:product.discountPercent,
-            summary:product.summary,
-            description:product.description,
-            category: product.category,
-            quantity: product.quantity,
-            productPictures:product.productPictures,
-            specs:specs
-          }
-        })
+        const productPayload = products.map((product) => productResponse(product))
         return resolve({
           data:productPayload,
           totalProduct
@@ -94,15 +103,93 @@ var that = module.exports = {
         if(_.isEmpty(product)){
           return reject(errorResponse(404, Message.product_not_found))
         }
-        let specs = {}
-        product.specs.forEach(element => {
-          specs[element.k]= element.v
-        })
-        product.specs = specs;
+        product.specs = convertSpecsInProduct(product);
         return resolve({
           data:{
             ...product
           }
+        })
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, createError.InternalServerError().message))
+      }
+    })
+  },
+  getProductByCategorySlug: (queryStr) => {
+    return new Promise((resolve, reject) => {
+      categoryModel.findOne({slug: queryStr.slug}).exec(async (error, category)=>{
+        if(error){
+          return reject(errorResponse(404, Message.category_not_exist))
+        }
+        const query = APIFeatures(productModel.find({
+          category: category._id
+        }), queryStr)
+        .filter()
+        .pagination(queryStr.limit)
+        .query
+        .lean()
+
+        try {
+          const products = await query
+          if(_.isEmpty(products)) return reject(errorResponse(404, Message.category_not_products))
+          
+          const apiFeaturesCountDocuments = new APIFeatures(productModel.find({
+            category: category._id
+          }), queryStr)
+          .filter()
+          .query
+          .countDocuments()
+          const totalProduct = await apiFeaturesCountDocuments
+
+          const productList = products.map((product) => productResponse(product))
+
+          return resolve({
+            data: productList,
+            totalProduct
+          })
+
+        } catch (error) {
+          return reject(errorResponse(500, createError.InternalServerError().message))
+        } 
+    })
+    })
+  },
+  searchFeature: (keyword) => {
+    return new Promise(async (resolve, reject) => {
+      console.log(keyword)
+       
+      const resultCategory =  categoryModel.find({
+        name: {
+          $regex: (keyword.length > 1) ? keyword : '^' + keyword,
+          $options: "i",
+        }
+      })
+      .select("slug name categoryImage")
+      .lean()
+      
+      const resultProduct =  productModel.find({
+        name: {
+          $regex: (keyword.length > 1) ? keyword : '^' + keyword,
+          $options: "i",
+        }
+      })
+      .select("name slug")
+      .lean()
+      try {
+        const [categories, products] = await Promise.all([resultCategory, resultProduct])
+        const payload = [
+          ...categories.map((category) => {
+            return {
+              ...category, type: "category"
+            }
+          }),
+           ...products.map((product) => {
+            return {
+              ...product, type: "product"
+            }
+          })]
+        return resolve({
+          data: payload
         })
       } catch (error) {
         console.log(error)

@@ -12,14 +12,14 @@ module.exports = productRouter= (router) => {
   // category routes
   router.post('/admin/add-category',isAuthAdmin, validation(addCategorySchema), categoryController.addCategory)
   router.get('/categories', categoryController.getAllCategories)
-
   // product routes
   router.post('/seller/add-product', isAuthSeller,validation(addProductSchema),productController.addProduct)
   router.put('/seller/update-product', isAuthSeller, validation(editProductSchema), productController.updateProduct)
   router.delete('/seller/delete-product/:id', isAuthSeller, productController.deleteProduct)
   router.get('/products', productController.getProducts)
-  
+  router.get('/category', productController.getProductByCategorySlug)
   router.get('/product/:slug', productController.getSingleProduct)
+  router.get('/search', productController.searchProducts)
 
   router.get('/test',async (req, res) => {
     try {

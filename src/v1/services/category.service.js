@@ -4,6 +4,8 @@ const _ = require('lodash')
 const { errorResponse } = require('../utils')
 const createError = require('http-errors')
 const Message = require('../lang/en')
+const slugify = require("slugify")
+const shortid = require("shortid")
 var that = module.exports = {
   addCategory: (category) => {
     return new Promise(async (resolve, reject) => {
@@ -14,12 +16,10 @@ var that = module.exports = {
         if(!_.isEmpty(existed)){
           return reject(errorResponse(400, Message.name_existed))
         }
-        const otp = otpGenerator.generate(8,
-          { alphabets: false, upperCase: false, specialChar: false })
         await new categoryModel({
-          "name":category.name,
-          "categoryImage":category.categoryImage ? category.categoryImage : "", 
-          "slug": otp
+          name:category.name,
+          categoryImage:category.categoryImage ? category.categoryImage : "", 
+          slug: `${slugify(name)}-${shortid.generate()}`
         }).save()
         return resolve({
           data:{

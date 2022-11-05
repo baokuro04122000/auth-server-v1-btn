@@ -63,6 +63,24 @@ var that = module.exports = {
       res.status(error.status).json(error)
     }
   },
+  getProductByCategorySlug:async (req, res) => {
+    try {
+      const payload = await productService.getProductByCategorySlug(req.query)
+      res.json(payload)
+    } catch (error) {
+      console.log(error)
+      res.status(error.status).json(error)
+    }
+  },
+  searchProducts:async (req, res) => {
+    try {
+      const payload = await productService.searchFeature(req.query.keyword)
+      res.json(payload)
+    } catch (error) {
+      console.log(error)
+      res.status(error.status).json(error)
+    }
+  },
   updateProduct: async (req, res) => {
     const { product, slug } = req.body
     try {
