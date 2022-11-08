@@ -6,7 +6,8 @@ const productModel = require('../models/product.model')
 const {
   addCategorySchema,
   addProductSchema,
-  editProductSchema
+  editProductSchema,
+  quickEditProduct
 } = require('../validations/product.validation')
 module.exports = productRouter= (router) => {
   // category routes
@@ -15,6 +16,7 @@ module.exports = productRouter= (router) => {
   // product routes
   router.post('/seller/add-product', isAuthSeller,validation(addProductSchema),productController.addProduct)
   router.put('/seller/update-product', isAuthSeller, validation(editProductSchema), productController.updateProduct)
+  router.put('/seller/quick-update-product', isAuthSeller, validation(quickEditProduct), productController.quickUpdateProduct)
   router.delete('/seller/delete-product/:id', isAuthSeller, productController.deleteProduct)
   router.get('/products', productController.getProducts)
   router.get('/category', productController.getProductByCategorySlug)

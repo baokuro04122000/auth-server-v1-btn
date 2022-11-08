@@ -7,8 +7,20 @@ const slugify = require("slugify");
 var that = module.exports = {
   addProduct: async (req, res) => {
     const product = req.body
-    const slug = generateOtp(8)
-    console.log(product)
+    const variants = product.variants 
+      ? product.variants
+      : {
+        name: product.name + "-" + shortid.generate(),
+        description: product.summary,
+        quantity: product.quantity,
+        image: _.isEmpty(product.productPictures)
+          ? 
+            {
+              fileLink:'',
+              fileId:''
+            }
+          : product.productPictures[0]
+        }
     try {
       const payload = await productService.addProduct({
         name: product.name,
@@ -28,6 +40,7 @@ var that = module.exports = {
           }
         ]: product.productPictures,
         description:product.description,
+        variants,
         specs: [
           {k:'author', v:product.author},
           {k:'printLength', v: product.printLength},
@@ -111,6 +124,18 @@ var that = module.exports = {
       }, slug, req.payload.seller._id)
       res.json(payload)
     } catch (error) {
+      res.status(error.status).json(error)
+    }
+  },
+  quickUpdateProduct:async (req, res) => {
+    const { productId ,productChanged } = req.body
+    console.log(productId, productChanged)
+    const sellerId = req.payload.seller._id
+    try {
+      const payload = await productService.quickUpdateProduct(sellerId, productId, productChanged)
+      res.json(payload)
+    } catch (error) {
+      console.log(error)
       res.status(error.status).json(error)
     }
   },

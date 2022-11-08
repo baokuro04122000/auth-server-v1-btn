@@ -18,7 +18,7 @@ var that = module.exports = {
         next()
       })
     }else{
-      return res.status(404).json(errorResponse(404,createError.NotFound()))
+      return res.status(404).json(errorResponse(404,createError.NotFound().message))
     }
   },
   isAuthSeller: async (req, res, next) => {
@@ -38,7 +38,7 @@ var that = module.exports = {
         next()
       })
     }else{
-      return res.status(403).json(errorResponse(403, createError.Unauthorized().message))
+      return res.status(403).json(errorResponse(403, createError.NotFound().message))
     }
   },
   isAuthAdmin: async (req, res, next) => {
@@ -47,7 +47,7 @@ var that = module.exports = {
       JWT.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, payload) => {
         if(err){
           if(err.name === "JsonWebTokenError"){
-            return res.status(409).json(errorResponse(409,createError.Unauthorized()))
+            return res.status(409).json(errorResponse(409,createError.Unauthorized().message))
           }
           return res.status(409).json(errorResponse(409,createError.Unauthorized(err.message)))
         }
@@ -58,7 +58,44 @@ var that = module.exports = {
         next()
       })
     }else{
-      return res.status(403).json(errorResponse(403, createError.Unauthorized().message))
+      return res.status(403).json(errorResponse(403, createError.NotFound().message))
+    }
+  },
+  isAuthMobile: (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if(authorization){
+        const token = authorization.slice(7,authorization.length); //Bearer xxx
+        JWT.verify(
+            token,
+            process.env.ACCESS_TOKEN_SECRET,
+            (err,decode) => {
+              if(err){
+                console.log(err)
+                if(err.name === "JsonWebTokenError"){
+                  return res.status(409).json(errorResponse(409,createError.Unauthorized().message))
+                }
+                return res.status(409).json(errorResponse(409,createError.Unauthorized(err.message)))
+              }
+              req.payload = decode
+              next()
+            }
+        );
+    }else{
+        res.status(403).json(errorResponse(403, createError.NotFound().message));
+    }
+  },
+  isAdminMobile : (req, res, next) => {
+    if(req.payload?.role === "admin"){
+        next();
+    }else{
+      return res.status(409).json(errorResponse(409,createError.Unauthorized().message))
+    }
+  },
+  isSellerMobile : (req,res,next)=>{
+    if(req.payload.role === "seller"){
+      next();   
+    }else{
+      return res.status(409).json(errorResponse(409,createError.Unauthorized().message))
     }
   }
 }

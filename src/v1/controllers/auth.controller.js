@@ -25,6 +25,20 @@ var that  = module.exports = {
       res.status(error.status).json(error)
     }
   },
+  userLoginMobile: async (req, res) => {
+    const { email, password } = req.body
+    try {
+      const {data, access_token, refresh_token} = await authService.userLogin(xssFilter.inHTMLData(email), password)
+      res.send({
+        data,
+        access_token,
+        refresh_token
+      }) 
+    } catch (error) {
+      console.log(error)
+      res.status(error.status).json(error)
+    }
+  },
   userRegisterWeb: async (req, res) => {
     const user = req.body
   
@@ -166,6 +180,27 @@ var that  = module.exports = {
         setCookies(res,'access_token', token,Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND))
         setCookies(res, 'refresh_token', refreshToken, Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED))
         res.json({data:payload, access_token:token})
+      } catch (error) {
+        console.log(error)
+        res.status(500).json(errorResponse(500, createError.InternalServerError()))
+      }
+    })
+  },
+  refreshTokenMobile :async (req,res) => {
+    const refresh_token = req.headers.authorization
+    const checkRedis = await redis.get(refresh_token)
+    if(!checkRedis){return res.status(404).json(errorResponse(404,Message.refresh_token_not_expired))}
+    JWT.verify(refresh_token, process.env.REFRESH_TOKEN_SECRET,async (err, payload) => {
+      if(err){
+        console.log(err)
+        return res.status(400).json(err)
+      }
+      if(!(payload._id === checkRedis))  return res.status(403).json(errorResponse(403,Message.token_expired))
+      try {
+        const token = await jwtService.signAccessToken(payload)
+        const refreshToken = await jwtService.signRefreshToken(payload)
+        await redis.del(refresh_token)
+        res.json({data:payload, access_token:token, refreshToken})
       } catch (error) {
         console.log(error)
         res.status(500).json(errorResponse(500, createError.InternalServerError()))

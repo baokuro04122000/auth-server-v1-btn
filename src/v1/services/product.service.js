@@ -4,15 +4,9 @@ const Message = require('../lang/en')
 const APIFeatures = require('../utils/apiFeatures')
 const createError = require('http-errors')
 const _ = require('lodash')
-const {errorResponse} = require('../utils')
+const {errorResponse, convertSpecsInProduct} = require('../utils')
 
-const convertSpecsInProduct = (product) => {
-  let specs = {}
-  product.specs.forEach(element => {
-    specs[element.k]= element.v
-  })
-  return specs
-}
+
 
 const productResponse = (product) => {
   let specs = {}
@@ -25,6 +19,7 @@ const productResponse = (product) => {
     seller: product.sellerId,
     slug:product.slug,
     price:product.price,
+    variants:product.variants,
     discountPercent:product.discountPercent,
     summary:product.summary,
     description:product.description,
@@ -34,6 +29,14 @@ const productResponse = (product) => {
     specs:specs
   }
 }
+
+const quickProductRequest = (product) => ({
+  name:product.name,
+  summary: product.summary,
+  quantity:product.quantity,
+  discountPercent: product.discountPercent,
+  price: product.price
+}) 
 
 var that = module.exports = {
   addProduct: (product) => {
@@ -119,8 +122,10 @@ var that = module.exports = {
     return new Promise((resolve, reject) => {
       categoryModel.findOne({slug: queryStr.slug}).exec(async (error, category)=>{
         if(error){
-          return reject(errorResponse(404, Message.category_not_exist))
+          return reject(errorResponse(500, createError.InternalServerError().message))
         }
+        if(_.isEmpty(category)) return reject(errorResponse(404, Message.category_not_exist))
+        
         const query = APIFeatures(productModel.find({
           category: category._id
         }), queryStr)
@@ -226,6 +231,42 @@ var that = module.exports = {
             message:Message.update_success
           }
         })
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, createError.InternalServerError().message))
+      }
+    })
+  },
+  quickUpdateProduct: (sellerId, productId, productChanged) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const updated = await productModel.findOneAndUpdate({
+          $and:[
+            {sellerId: sellerId},
+            {_id: productId}
+         ]
+        }, {
+          $set: quickProductRequest(productChanged)
+        },{
+          new: true
+        }).updateOne({
+          "specs":{$elemMatch: {k: 'author'}}
+        },{
+          $set:{
+            "specs.$.v":productChanged.author 
+          }
+        })
+
+        if(_.isEmpty(updated)){
+          return reject(errorResponse(403, Message.product_not_found))
+        }
+
+        return resolve({
+          data: {
+            message: Message.update_success
+          }
+        })
+
       } catch (error) {
         console.log(error)
         return reject(errorResponse(500, createError.InternalServerError().message))

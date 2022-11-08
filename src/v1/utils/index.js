@@ -23,5 +23,15 @@ module.exports = {
   generateOtp: (characterLong) => {
     return otpGenerator.generate(characterLong,
       { alphabets: false, upperCase: false, specialChar: false })
+  },
+  totalPriceProduct: (price, quantity, discount) => {
+    return (discount != 0) ? price*quantity*(1-discount/100) : price*quantity
+  },
+  convertSpecsInProduct: (product) => {
+    let specs = {}
+    product.specs.forEach(element => {
+      specs[element.k]= element.v
+    })
+    return specs
   }
 } 

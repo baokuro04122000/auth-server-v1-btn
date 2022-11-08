@@ -79,6 +79,7 @@ var that = module.exports = {
       .required(Message.quantity_required)
       .matches(/^[1-9]\d*$/, Message.wrong_number),
       summary: yup.string()
+      .required(Message.summary_require)
       .max(150, Message.summary_max),
       city: yup.string()
       .required(Message.city)
@@ -86,6 +87,37 @@ var that = module.exports = {
       .max(32, Message.name_min_invalid)
 
     })
-    
+  }),
+  quickEditProduct: yup.object({
+    productId:yup.string()
+    .required(Message.product_is_empty),
+    productChanged:yup.object({
+      name: yup.string()
+      .required(Message.name_required)
+      .min(2, Message.name_min_invalid)
+      .max(150, Message.product_name_max),
+      quantity:yup.string()
+      .required(Message.quantity_required)
+      .matches(/^[1-9]\d*$/, Message.wrong_number),
+      summary: yup.string()
+      .required(Message.summary_require)
+      .max(150, Message.summary_max),
+      discountPercent:yup.string()
+      .matches(/^100(\.(0){0,2})?$|^([1-9]?[0-9])(\.(\d{0,2}))?$/, Message.percentage_wrong_format),
+      author: yup.string()
+      .required(Message.author_required)
+      .min(2, Message.name_min_invalid)
+      .max(32, Message.name_invalid),
+    })
+  }),
+  addToCartSchema: yup.object({
+    cartItem: yup.object({
+      product: yup.string().required(Message.product_is_empty)
+    })
+  }),
+  removeCartItemSchema: yup.object({
+    cartItem: yup.object({
+      product: yup.string().required(Message.product_is_empty)
+    })
   })
 }

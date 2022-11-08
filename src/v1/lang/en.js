@@ -71,7 +71,12 @@ module.exports = {
   "delete_success":"Deleting is success",
   "userId_required":"User Id is required",
   "otp_expired":"Otp is expired",
-  "category_not_products":"This category hasn't any product"
+  "category_not_products":"This category hasn't any product",
+  "add_cart_success":"Add to cart successfully",
+  "product_is_empty":"Product is not allowed empty",
+  "variant_is_empty":"Variant is not allowed empty",
+  "summary_require":"Summary is required"
+
   
   
 }

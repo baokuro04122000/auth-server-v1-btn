@@ -3,3 +3,5 @@ api.http
 .env
 swagger.yaml
 src/v1/databases
+/fetchApi
+/rest-mobile

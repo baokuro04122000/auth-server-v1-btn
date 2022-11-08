@@ -13,6 +13,7 @@ module.exports = authRouter= (router) => {
   router.post('/auth/admin-login', authController.adminLogin)
   //router.post('/auth/admin-register', authController.adminRegister)
   router.post('/auth/login',validation(userLoginSchema), authController.userLogin)
+  router.post('/auth/login-mobile', validation(userLoginSchema), authController.userLoginMobile)
   router.post('/auth/register',validation(userRegisterSchema), authController.userRegisterWeb)
   router.post('/auth/mobile-register',validation(userRegisterSchema), authController.userRegisterMobile)
   router.post('/auth/check-seller-register-request', authController.checkSellerRegisterRequest)
@@ -25,6 +26,7 @@ module.exports = authRouter= (router) => {
   
   router.get('/auth/seller-register-request', jwt.verifyAccessToken, authController.sellerRegisterRequest)
   router.get('/auth/refresh-token', authController.refreshToken)
+  router.get('/auth/refresh-token-mobile', authController.refreshTokenMobile)
   router.get('/auth/active-account', authController.activeAccount)
   router.get('/api/oauth/google', authController.googleLogin)
   router.get('/api/me', authController.getCurrentUser)

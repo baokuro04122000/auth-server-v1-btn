@@ -1,5 +1,5 @@
 const { Schema, model } = require('mongoose')
-
+variantSchema = require('../models/variant.model').schema
 
 const productSchema = new Schema({
   name: {
@@ -52,6 +52,7 @@ const productSchema = new Schema({
       fileLink:{type: String}
     }
   ],
+  variants: [variantSchema],
   release_date: Date,
   meta:{
     totalSold: {type: Number, default: 0},
