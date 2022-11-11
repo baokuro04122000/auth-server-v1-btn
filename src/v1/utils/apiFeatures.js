@@ -11,11 +11,13 @@ class APIFeatures {
       }
       : {}
 
+
     const categoryId = this.queryStr.categoryId
       ? {
-        category: categoryId
+        category: this.queryStr.categoryId
       }
       : {}
+    
 
     const name = this.queryStr.name
       ? {
@@ -27,14 +29,8 @@ class APIFeatures {
         summary: {$regex: this.queryStr.summary, $options: "i"}
       }
       : {}
-    const searchNormal = {
-        $or: [
-            {...name},
-            {...summary}
-        ]
-    }
 
-    this.query = this.query.find({...sellerId, ...searchNormal, ...categoryId });
+    this.query = this.query.find({...sellerId, ...categoryId, ...name, ...summary });
     return this;
   }
 
