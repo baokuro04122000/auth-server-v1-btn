@@ -71,6 +71,4 @@ const sellerSchema = new Schema({
   timestamps:true
 })
 
-sellerSchema.index({"info.name":"text"})
-
 module.exports = model('sellers', sellerSchema)

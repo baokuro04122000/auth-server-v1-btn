@@ -74,7 +74,7 @@ var that = module.exports = {
         .filter()
         .pagination(limit)
         .query
-        .populate('sellerId sellerId.info')
+        .populate('seller seller.info')
         .populate('category category.name')
         .lean()
 
@@ -100,8 +100,14 @@ var that = module.exports = {
       try {
         const product = await productModel
         .findOne({slug})
-        .populate('sellerId sellerId.info')
-        .populate('category')
+        .populate({
+          path: 'sellerId',
+          select:"-proof -isDisabled -updatedAt -specs"
+        })
+        .populate({
+          path: 'category',
+          select:"-isDisabled -specs"
+        })
         .lean();
         if(_.isEmpty(product)){
           return reject(errorResponse(404, Message.product_not_found))
@@ -109,7 +115,9 @@ var that = module.exports = {
         product.specs = convertSpecsInProduct(product);
         return resolve({
           data:{
-            ...product
+            ...product,
+            seller: product.sellerId,
+            sellerId: product.sellerId._id
           }
         })
       } catch (error) {

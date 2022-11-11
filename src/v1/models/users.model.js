@@ -85,5 +85,4 @@ userSchema.methods.isCheckPassword = async function(password){
   }
 }
 
-userSchema.index({"local.email":"text", "google.email":"text"})
 module.exports = mongoose.model('users', userSchema)

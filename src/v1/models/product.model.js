@@ -5,7 +5,8 @@ const productSchema = new Schema({
   name: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    index: true
   },
   sellerId:{
     type: Schema.Types.ObjectId,
@@ -43,7 +44,8 @@ const productSchema = new Schema({
   },
   summary:{
     type: String,
-    default:'hello'
+    default:'hello',
+    index: true
   },
   type:{type: String, default:'book'},
   productPictures: [
@@ -68,6 +70,6 @@ const productSchema = new Schema({
   timestamps: true
 })
 
-productSchema.index({"specs.k":1,"specs.v":1, name:'text', summary: "text" })
+productSchema.index({"specs.k":1,"specs.v":1})
 
 module.exports = model('products', productSchema)

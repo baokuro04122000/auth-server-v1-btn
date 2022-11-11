@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "redis-commander": "redis-commander"
+    "redis-commander": "redis-commander",
+    "test-performance": "autocannon http://localhost:4000/v1/categories"
   },
   "keywords": [],
   "author": "Bao Tran",
@@ -18,6 +19,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
+    "express-rate-limit": "^6.6.0",
     "helmet": "^6.0.0",
     "http-errors": "^2.0.0",
     "ioredis": "^5.2.3",
@@ -34,6 +36,7 @@
     "yup": "^0.32.11"
   },
   "devDependencies": {
+    "autocannon": "^7.10.0",
     "nodemon": "^2.0.19",
     "redis-commander": "^0.8.0"
   }
