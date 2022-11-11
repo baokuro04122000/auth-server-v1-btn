@@ -38,7 +38,7 @@ class APIFeatures {
       const queryCopy = { ...this.queryStr };
 
       // Removing fields from the query
-      const removeFields = ["limit", "curentPage", "sellerId", "categoryId", "name", "summary"];
+      const removeFields = ["limit", "curentPage", "sellerId", "categoryId", "name", "summary", "slug"];
       removeFields.forEach((el) => delete queryCopy[el]);
 
       // Advance filter for price, ratings etc

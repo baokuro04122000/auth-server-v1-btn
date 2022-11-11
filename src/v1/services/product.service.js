@@ -108,8 +108,8 @@ var that = module.exports = {
           select:"-proof -isDisabled -updatedAt -specs"
         })
         .populate({
-          path: 'category',
-          select:"-isDisabled -specs"
+          path:'category',
+          select:'name categoryImage slug'
         })
         .lean();
         if(_.isEmpty(product)){
@@ -132,17 +132,25 @@ var that = module.exports = {
   getProductByCategorySlug: (queryStr) => {
     return new Promise((resolve, reject) => {
       categoryModel.findOne({slug: queryStr.slug}).exec(async (error, category)=>{
+        
         if(error){
           return reject(errorResponse(500, createError.InternalServerError().message))
         }
         if(_.isEmpty(category)) return reject(errorResponse(404, Message.category_not_exist))
-        
-        const query = APIFeatures(productModel.find({
+        const query = new APIFeatures(productModel.find({
           category: category._id
         }), queryStr)
         .filter()
         .pagination(queryStr.limit)
         .query
+        .populate({
+          path:'category',
+          select:'name categoryImage slug'
+        })
+        .populate({
+          path: 'sellerId',
+          select:"-proof -isDisabled -updatedAt -specs"
+        })
         .lean()
 
         try {
@@ -165,6 +173,7 @@ var that = module.exports = {
           })
 
         } catch (error) {
+          console.log(error)
           return reject(errorResponse(500, createError.InternalServerError().message))
         } 
     })

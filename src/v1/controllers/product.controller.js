@@ -78,6 +78,7 @@ var that = module.exports = {
   },
   getProductByCategorySlug:async (req, res) => {
     try {
+      console.log(req.query)
       const payload = await productService.getProductByCategorySlug(req.query)
       res.json(payload)
     } catch (error) {
