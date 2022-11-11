@@ -74,7 +74,10 @@ var that = module.exports = {
         .filter()
         .pagination(limit)
         .query
-        .populate('seller seller.info')
+        .populate({
+          path: 'sellerId',
+          select: "info"
+        })
         .populate('category category.name')
         .lean()
 
