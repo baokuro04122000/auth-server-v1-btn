@@ -75,7 +75,8 @@ module.exports = {
   "add_cart_success":"Add to cart successfully",
   "product_is_empty":"Product is not allowed empty",
   "variant_is_empty":"Variant is not allowed empty",
-  "summary_require":"Summary is required"
+  "summary_require":"Summary is required",
+  "send_otp_register_again":"OTP is sent to your mail again, please check your mail"
 
   
   

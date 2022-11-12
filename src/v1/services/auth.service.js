@@ -17,7 +17,7 @@ const jwtService = require('./jwt.service')
 const qs = require('qs')
 const axios = require('axios')
 const { v4: uuidv4 } = require('uuid');
-const otpGenerator = require('otp-generators')
+
 
 
 var that = module.exports = {
@@ -734,6 +734,36 @@ var that = module.exports = {
       } catch (error) {
         console.log(error)
         return reject(errorResponse(500, createError.InternalServerError().message))   
+      }
+    })
+  },
+  registerSendOTPAgain: (userId) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const user = await userModel.findOne({_id: userId}).lean()
+        if(_.isEmpty(user)) return reject(errorResponse(404, createError.NotFound().message))
+        const otp = await otpModel.findOne({user: userId})
+        const genOtp = generateOtp(6);
+        await  new otpModel({
+          user: userId,
+          generatedOtp: genOtp
+        }).save()
+        redis.publish('send_otp_reset_password',JSON.stringify({
+          email: user.local.email,
+          otp:genOtp,
+          name: user.info.firstName + user.info.lastName
+        }))
+        if(!_.isEmpty(otp)){
+          otp.remove()
+        }
+        return resolve({
+          data: {
+            message: Message.send_otp_register_again
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, createError.InternalServerError().message))
       }
     })
   }

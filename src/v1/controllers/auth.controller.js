@@ -302,5 +302,14 @@ var that  = module.exports = {
     } catch (error) {
       res.status(error.status).json(error)
     }
+  },
+  registerSendOTPAgain: async (req, res) => {
+    const {userId} = req.body
+    try {
+      const payload = await authService.registerSendOTPAgain(userId)
+      res.json(payload)
+    } catch (error) {
+      res.status(error.status).json(error)
+    }
   }
 }
