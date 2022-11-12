@@ -1,8 +1,8 @@
 module.exports = {
   apps : [{
-    name   : "main server",
+    name   : "main_server",
     script : "./server.js",
     exec_mode:"cluster",
-    instances:"4"
+    instances:"max"
   }]
 }

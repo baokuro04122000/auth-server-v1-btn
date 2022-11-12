@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "start": "pm2-runtime start ecosystem.config.js",
+    "dev":"node server.js",
     "redis-commander": "redis-commander",
     "test-performance": "autocannon http://localhost:4000/v1/categories",
     "cluster":"pm2 start server.js -i 0",
     "check":"pm2 ls",
-    "stop":"pm2 stop server",
+    "stop":"pm2 stop main_server",
     "monitor":"pm2 monit",
     "init-simple":"pm2 init simple"
   
