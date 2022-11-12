@@ -148,7 +148,6 @@ var that = module.exports = {
             local:{
               email:user.email,
               password:user.password,
-              verifyCode: Number(otp)
             },
             info:{
               firstName:user.firstName,
@@ -163,10 +162,11 @@ var that = module.exports = {
         }
         try {
           (await otpModel.find({user: data._id})).map((otp) => otp.remove())
-          const generatedOtp = await new otpModel({
+          await new otpModel({
             user:data._id,
             generatedOtp:otp
            }).save()
+           console.log(otp)
           redis.publish('send_otp_register_mobile',JSON.stringify({
             email: user.email,
             otp:otp,
