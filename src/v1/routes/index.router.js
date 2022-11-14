@@ -4,6 +4,7 @@ const authRouter = require('./auth.router')
 const uploadRouter = require('./upload.router')
 const productRouter = require('./product.router')
 const cartRouter = require('./cart.router')
+const profileRouter = require('./profile.router')
 router.get('/checkstatus',async (req, res, next) => {
     try {
        
@@ -20,5 +21,6 @@ authRouter(router)
 uploadRouter(router)
 productRouter(router)
 cartRouter(router)
+profileRouter(router)
 
 module.exports = router;

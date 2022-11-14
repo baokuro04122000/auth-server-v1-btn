@@ -57,7 +57,7 @@ module.exports = {
   "publisher_required":"Publisher is required",
   "wrong_number":"Please enter a number",
   "language_required":"Language is required",
-  "language_max":"Language must be less than 20 characters long",
+  "language_max":"Language must be less than 5 characters long",
   "date_not_existed":"Date is not exist, dd/mm/yyyy",
   "publication_date_required":"Publication date is required",
   "percentage_wrong_format":"Discount percentage is wrong format",
@@ -76,7 +76,13 @@ module.exports = {
   "product_is_empty":"Product is not allowed empty",
   "variant_is_empty":"Variant is not allowed empty",
   "summary_require":"Summary is required",
-  "send_otp_register_again":"OTP is sent to your mail again, please check your mail"
+  "send_otp_register_again":"OTP is sent to your mail again, please check your mail",
+  "old_password_wrong":"The old password is wrong, please try again",
+  "update_password_success":"The password is changed",
+  "local_change_password":"The changing password spend for local account",
+  "admin_not_change_password_mobile":"Admin change password in admin page",
+  "update_profile_success":"The profile is changed",
+  "birthDay":'birthDay required'
 
   
   

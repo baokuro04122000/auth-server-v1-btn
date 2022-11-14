@@ -17,18 +17,24 @@ const userSchema = new mongoose.Schema({
     password:{type: String},
   },
   google:{
-    uid:{type: String, index: true},
+    uid:{type: String},
     name:{type:String},
-    email:{type: String, trim:true, unique:true, index:true},
+    email:{type: String, trim:true, unique:true, index: true},
     picture:{type:String}
   },
   info:{
     firstName:{type: String, min:2, max:30, required:true},
     lastName:{type:String, min:2, max:30, required:true},
     nickName:{type:String, min:2, max:50, default:''},
-    gender:{type:String, min:3, max:15},
+    gender:{
+      type:String,
+      min:3,
+      max:15,
+      enum: ['nam','nu','male','female','other'],
+      default:'male'
+    },
     birthDay:{type:String, min:6, max:8},
-    language:{type:String, enum:['en', 'vi'], default:'en'},
+    language:{type:String, default:'en'},
     avatar:{type:String}
   },
   status: {
@@ -82,6 +88,23 @@ userSchema.methods.isCheckPassword = async function(password){
     return await bcrypt.compare(password, this.local.password)
   } catch (error) {
     console.log(error)
+  }
+}
+
+userSchema.methods.hashPassword = async (password) => {
+  try {
+    if(password){
+      const salt = await bcrypt.genSalt(10)
+      const hashPassword = await bcrypt.hash(password, salt)
+      return Promise.resolve(hashPassword)
+    }
+  } catch (error) {
+    return Promise.reject({
+      status: 500,
+      errors:{
+        message:"Internal Server Error"
+      }
+    })
   }
 }
 

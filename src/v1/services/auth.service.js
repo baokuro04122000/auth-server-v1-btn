@@ -711,7 +711,9 @@ var that = module.exports = {
         if(_.isEmpty(existed)){
           return reject(errorResponse(400, Message.otp_expired))
         }
+        console.log(otp)
         const valid = await existed.isCheckOtp(otp)
+        console.log(valid)
         if(!valid) return reject(errorResponse(400, Message.otp_invalid))
         const activated = await userModel.updateOne({
           _id: userId          

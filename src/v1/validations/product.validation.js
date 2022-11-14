@@ -8,6 +8,15 @@ var that = module.exports = {
     .max(100, Message.category_max_length),
   }),
   addProductSchema: yup.object({
+    printLength: yup.string()
+    .notRequired()
+    .test('printLength', Message.wrong_number, function(value) {
+      if (!!value) {
+        const schema = yup.string().matches(/^[1-9]\d*$/)
+        return schema.isValidSync(value);
+      }
+      return true;
+    }),
     name: yup.string()
     .required(Message.name_required)
     .min(2, Message.name_min_invalid)
@@ -20,12 +29,10 @@ var that = module.exports = {
     .required(Message.publisher_required)
     .min(2, Message.name_min_invalid)
     .max(32, Message.name_invalid),
-    printLength: yup.string()
-    .matches(/^[1-9]\d*$/, Message.wrong_number),
     language:yup.string()
     .required(Message.language_required)
     .min(2, Message.name_min_invalid)
-    .max(20, Message.language_max),
+    .max(5, Message.language_max),
     category:yup.string()
     .required(Message.category_required)
     .min(2, Message.category_min_length)

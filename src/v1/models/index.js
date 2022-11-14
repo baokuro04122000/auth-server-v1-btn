@@ -5,6 +5,7 @@ const productModel = require('./product.model')
 const categoryModel = require('./category.model')
 const deliveryModel = require('./deliveryInfo.model')
 const sellerModel = require('./sellers.model')
+
 module.exports = {
   userModel,
   orderModel,

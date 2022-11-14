@@ -3,6 +3,6 @@ module.exports = {
     name   : "main_server",
     script : "./server.js",
     exec_mode:"cluster",
-    instances:"max"
+    instances:"3"
   }]
 }
