@@ -1,4 +1,5 @@
 const cartModel = require('../models/cart.model')
+const productModel = require('../models/product.model')
 const { errorResponse } = require('../utils')
 const createError = require('http-errors')
 const Message = require('../lang/en')
@@ -8,6 +9,11 @@ var that = module.exports = {
   addToCart: (userId,cartItem) => {
     return new Promise(async (resolve, reject) => {
       try {
+        const productExists = await productModel.findOne({
+          _id: cartItem.product
+        }).lean()
+        console.log(productExists)
+        if(_.isEmpty(productExists)) return reject(errorResponse(404, Message.product_not_found))
         const cart = await cartModel.findOne({ user: userId }).lean()
         if (!_.isEmpty(cart)) {
           const product = cartItem.product
@@ -70,7 +76,6 @@ var that = module.exports = {
   },
   getCartItems: (userId) => {
     return new Promise(async (resolve, reject) => {
-      console.log(userId)
       try {
         const cart = await cartModel.findOne({
           user: userId
@@ -99,15 +104,22 @@ var that = module.exports = {
           data: {
             _id: cart._id,
             user: cart.user,
-            cartItems:cart.cartItems.map((item) => ({
-              ...item,
-              product: {
-                ...item.product,
-                specs: convertSpecsInProduct(item.product), 
-                productPictures: item.product.productPictures[0]
-              },
-              totalPrice: totalPriceProduct(item.product.price, item.quantity, item.product.discountPercent)
-            }))
+            cartItems:cart.cartItems.map((item) => {
+              if(!item.product){
+                return {
+                  message: "product not exists"
+                }
+              }
+              return {           
+                ...item,
+                product: {
+                  ...item.product,
+                  specs: convertSpecsInProduct(item.product), 
+                  productPictures: item.product.productPictures[0]
+                },
+                totalPrice: totalPriceProduct(item.product.price, item.quantity, item.product.discountPercent)
+              }
+            })
           }
         })
       } catch (error) {
