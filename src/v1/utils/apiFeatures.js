@@ -34,6 +34,28 @@ class APIFeatures {
     return this;
   }
 
+  sellerCategorySearch(){
+    const sellerId = this.queryStr.sellerId 
+      ? {
+        sellerId:this.queryStr.sellerId
+      }
+      : {}
+    const categoryId = this.queryStr.categoryId
+    ? {
+      category: this.queryStr.categoryId
+    }
+    : {}
+
+    const query = {
+      $and:[
+        sellerId,
+        categoryId
+      ]
+    }
+    this.query = this.query.find({...query});
+    return this;
+  }
+
   filter() {
       const queryCopy = { ...this.queryStr };
 

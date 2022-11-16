@@ -1,7 +1,6 @@
 const createError = require('http-errors')
 const productService = require('../services/product.service')
 const _ = require('lodash')
-const {generateOtp} = require('../utils')
 const shortid = require("shortid");
 const slugify = require("slugify");
 var that = module.exports = {

@@ -7,7 +7,6 @@ const redis = require('../databases/init.redis')
 const createError = require('http-errors')
 const {errorResponse} = require('../utils')
 const { setCookies } = require('../utils')
-
 const Message = require('../lang/en')
 var that  = module.exports = {
   userLogin: async (req, res) => {
