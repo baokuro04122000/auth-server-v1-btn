@@ -82,7 +82,10 @@ module.exports = {
   "local_change_password":"The changing password spend for local account",
   "admin_not_change_password_mobile":"Admin change password in admin page",
   "update_profile_success":"The profile is changed",
-  "birthDay":'birthDay required'
+  "birthDay":'birthDay required',
+  "add_address_success":"Your infomation is saved",
+  "field_required":"This field is required",
+  "addressId_not_found":"Address Id not found"
 
   
   

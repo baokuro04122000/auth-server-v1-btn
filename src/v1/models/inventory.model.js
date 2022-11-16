@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const { Schema, model } = require('mongoose')
 
 const inventorySchema = new Schema({
-  productId: {
+  product: {
     type: mongoose.SchemaTypes.ObjectId, 
     require:true, 
     ref:"products"

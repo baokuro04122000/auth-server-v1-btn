@@ -27,6 +27,7 @@ const productSchema = new Schema({
     required: true,
     unique: true
   },
+  maxOrder:{type: Number, default: 5, required: true},
   price: {
     type: Number,
     required: true

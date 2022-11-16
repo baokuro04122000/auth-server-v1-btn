@@ -45,5 +45,5 @@ const DeliveryInfoSchema = new mongoose.Schema(
     { collection:"deliveryInfo" ,timestamps: true }
 );
 
-mongoose.model("Address", addressSchema);
+mongoose.model("address", addressSchema);
 module.exports = mongoose.model("deliveryInfo", DeliveryInfoSchema);
