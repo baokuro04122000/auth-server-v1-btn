@@ -17,7 +17,10 @@ var that = module.exports = {
       zipCode:yup.number()
       .integer()
       .min(1000)
-      .max(999999)
+      .max(999999),
+      code: yup.number()
+      .integer()
+      .min(0)
     })
   }),
   updateDeliveryInfoSchema:yup.object({
@@ -37,7 +40,10 @@ var that = module.exports = {
       zipCode:yup.number()
       .integer()
       .min(1000)
-      .max(999999)
+      .max(999999),
+      code: yup.number()
+      .integer()
+      .min(0)
     })
   })
 }

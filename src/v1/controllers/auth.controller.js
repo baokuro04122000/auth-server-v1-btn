@@ -121,7 +121,7 @@ var that  = module.exports = {
         fbLink: fbLink ?  xssFilter.inHTMLData(fbLink).trim() : "",
         inLink: inLink ? xssFilter.inHTMLData(inLink).trim() : "",
         logo: _.isEmpty(logo) ? {
-          link:"https://vn-live-01.slatic.net/p/mdc/03b895db9c7b85ae98973b0941d66696.jpg",
+          fileLink:"https://vn-live-01.slatic.net/p/mdc/03b895db9c7b85ae98973b0941d66696.jpg",
         } : logo,
         proof: proof ? proof : [],
         token
@@ -186,7 +186,8 @@ var that  = module.exports = {
     })
   },
   refreshTokenMobile :async (req,res) => {
-    const refresh_token = req.headers.authorization
+    const authorization = req.headers.authorization
+    const refresh_token = authorization.slice(7,authorization.length)
     const checkRedis = await redis.get(refresh_token)
     if(!checkRedis){return res.status(404).json(errorResponse(404,Message.refresh_token_not_expired))}
     JWT.verify(refresh_token, process.env.REFRESH_TOKEN_SECRET,async (err, payload) => {

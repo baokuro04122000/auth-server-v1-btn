@@ -5,16 +5,16 @@
   "main": "index.js",
   "scripts": {
     "start": "pm2-runtime start ecosystem.config.js",
-    "dev":"nodemon server.js",
+    "dev": "nodemon server.js",
     "redis-commander": "redis-commander",
-    "test-performance": "autocannon http://localhost:4000/v1/checkstatus",
-    "cluster":"pm2 start server.js -i 0",
-    "check":"pm2 ls",
-    "stop":"pm2 stop external",
-    "monitor":"pm2 monit",
-    "init-simple":"pm2 init simple",
-    "delete":"pm2 delete external"
-  
+    "test-performance": "autocannon http://localhost:4000/v1/categories",
+    "cluster": "pm2 start server.js -i 0",
+    "check": "pm2 ls",
+    "stop": "pm2 stop external",
+    "monitor": "pm2 monit",
+    "init-simple": "pm2 init simple",
+    "delete": "pm2 delete external",
+    "tree-shaking": "rollup server.js --format cjs --file bundle.js"
   },
   "keywords": [],
   "author": "Bao Tran",
@@ -46,7 +46,8 @@
   },
   "devDependencies": {
     "autocannon": "^7.10.0",
-    "nodemon": "^2.0.19",
-    "redis-commander": "^0.8.0"
+    "nodemon": "^2.0.20",
+    "redis-commander": "^0.8.0",
+    "rollup": "^3.3.0"
   }
 }

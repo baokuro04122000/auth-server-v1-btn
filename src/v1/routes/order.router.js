@@ -1,5 +1,5 @@
 const orderController = require('../controllers/order.controller')
-const { isAuthMobile } = require('../middlewares/jwt.middleware')
+const { isAuthMobile, isAuthSeller } = require('../middlewares/jwt.middleware')
 const validation = require('../middlewares/validation.middleware')
 const {
   addDeliveryInfoSchema,
@@ -12,4 +12,19 @@ module.exports = orderRouter= (router) => {
   router.post('/delivery/delete', isAuthMobile, orderController.deleteDeliveryInfo)
   router.put('/delivery/update', isAuthMobile,validation(updateDeliveryInfoSchema), orderController.updateDeliveryInfo)
   router.put('/delivery/set-default', isAuthMobile, orderController.setDefaultDeliveryInfo)
+  // user
+  router.post('/order/add', isAuthMobile, orderController.addOrder)
+  router.post('/order/get-detail', isAuthMobile, orderController.getDetailOrder)
+  router.get('/order/all', isAuthMobile, orderController.getOrderList)
+  router.get('/order/all-ordered', isAuthMobile, orderController.getAllOrdered)
+  router.post('/order/cancel-order-item', isAuthMobile, orderController.cancelOrderItem)
+  router.post('/order/cancel-order', isAuthMobile, orderController.cancelOrder)
+  router.get('/order/get-all-orders-cancel', isAuthMobile, orderController.getAllOrdersCancelUser)
+  router.get('/order/all-orders-shipping', isAuthMobile, orderController.getAllOrdersShippingUser)
+  router.get('/order/all-orders-completed', isAuthMobile, orderController.getAllOrdersCompletedUser)
+  //seller
+  router.get('/seller/orders-processing',isAuthSeller, orderController.getOrdersNotDoneOfSeller)
+  router.put('/seller/status-order', orderController.updateStatusOrderBySeller)
+  //shipper
+  router.put('/shipper/status-order', orderController.updateStatusOrderByShipper)
 }

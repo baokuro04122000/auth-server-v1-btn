@@ -7,12 +7,17 @@ const inventorySchema = new Schema({
     require:true, 
     ref:"products"
   },
-  quantity: {type: number, require: true},
+  sellerId:{
+    type: mongoose.SchemaTypes.ObjectId,
+    ref:"sellers",
+    required: true
+  },
   reservations: [
     {
-      user:{
+      order: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:"users"
+        ref:"orders",
+        required: true
       }
     }
   ]

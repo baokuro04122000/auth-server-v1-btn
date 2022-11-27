@@ -18,7 +18,7 @@ const sellerSchema = new Schema({
       ]
     },
     logo: {
-      fileLink: {type: String, },
+      fileLink: {type: String},
       fileId:{type: String, default: null}
     },
     slogan:{

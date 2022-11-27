@@ -5,17 +5,21 @@ const morgan = require('morgan')
 const compression = require('compression')
 const cookieParser = require('cookie-parser')
 const cors = require('cors')
-//const rateLimit = require('express-rate-limit')
+const os = require('os')
+const rateLimit = require('express-rate-limit')
 //init dbs 
 require('./v1/databases/init.mongodb')
 require('./v1/databases/init.redis')
 //rate limit
-// const apiLimiter = rateLimit({
-// 	windowMs: 1000, // 1s
-// 	max: 20, // Limit each IP to 20 requests per `window` (here, per 1 second)
-// 	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-// 	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-// })
+const apiLimiter = rateLimit({
+	windowMs: 1000, // 1s
+	max: 20, // Limit each IP to 20 requests per `window` (here, per 1 second)
+	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+})
+//set thread pool in nodejs
+process.env.UV_THREADPOOL_SIZE = os.cpus().length
+
 //user middleware
 //app.use('/v1', apiLimiter)
 app.use(express.json())

@@ -85,8 +85,13 @@ module.exports = {
   "birthDay":'birthDay required',
   "add_address_success":"Your infomation is saved",
   "field_required":"This field is required",
-  "addressId_not_found":"Address Id not found"
-
+  "addressId_not_found":"Address Id not found",
+  "shipping_code_not_found":"The shipping code not found",
+  "out_of_stock":"out of stock",
+  "update_order_status_permission":"You are not authorized to update the shipping status.",
+  "done_order":"This order is done!!!",
+  "order_deleted":"This order is deleted by seller",
+  "cancel_order_success":"Cancel the order is success"
   
   
 }

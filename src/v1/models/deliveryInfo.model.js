@@ -26,10 +26,18 @@ const addressSchema = new mongoose.Schema({
         max:999999,
         min:1000
     },
+    code:{
+        type: Number,
+        required: true,
+        unique: true
+    },
     isDefault: {
         type: Boolean,
         default: false
     }
+},{
+    collection:"addresses",
+    timestamps: true
 });
 
 
@@ -45,5 +53,5 @@ const DeliveryInfoSchema = new mongoose.Schema(
     { collection:"deliveryInfo" ,timestamps: true }
 );
 
-mongoose.model("address", addressSchema);
+mongoose.model("addresses", addressSchema);
 module.exports = mongoose.model("deliveryInfo", DeliveryInfoSchema);

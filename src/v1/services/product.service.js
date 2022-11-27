@@ -67,8 +67,6 @@ var that = module.exports = {
         .query
         .countDocuments()
 
-        const totalProduct = await apiFeaturesCountDocuments;
-
         const apiFeatures = new APIFeatures(productModel, query)
         .search()
         .filter()
@@ -80,8 +78,7 @@ var that = module.exports = {
         })
         .populate('category category.name')
         .lean()
-
-        const products = await apiFeatures
+        const [totalProduct, products] = await Promise.all([apiFeaturesCountDocuments,apiFeatures])
 
         if(_.isEmpty(products)){
           return reject(errorResponse(404, Message.product_empty))
