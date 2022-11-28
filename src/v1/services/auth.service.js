@@ -261,6 +261,56 @@ var that = module.exports = {
             return reject(errorResponse(401, createError.InternalServerError().message))
           }
         }
+        if(account.role === "shipper"){
+          const payload = {
+            _id: account._id,
+            nickName: account.info.nickName,
+            firstName:account.info.firstName,
+            lastName:account.info.lastName,
+            profilePicture: account.info.avatar,
+            role: account.role,
+            meta:account.meta,
+            special:account.specs,
+            typeLogin:"local"
+          }
+          try {
+            const access_token = await jwtService.signAccessToken(payload)
+            const refresh_token = await jwtService.signRefreshToken(payload)
+            return resolve({
+              data: payload,
+              access_token,
+              refresh_token
+            })  
+          } catch (error) {
+            console.log(error)
+            return reject(errorResponse(401, createError.InternalServerError().message))
+          }
+        }
+        if(account.role === "admin"){
+          const payload = {
+            _id: account._id,
+            nickName: account.info.nickName,
+            firstName:account.info.firstName,
+            lastName:account.info.lastName,
+            profilePicture: account.info.avatar,
+            role: account.role,
+            meta:account.meta,
+            special:account.specs,
+            typeLogin:"local"
+          }
+          try {
+            const access_token = await jwtService.signAccessToken(payload)
+            const refresh_token = await jwtService.signRefreshToken(payload)
+            return resolve({
+              data: payload,
+              access_token,
+              refresh_token
+            })  
+          } catch (error) {
+            console.log(error)
+            return reject(errorResponse(401, createError.InternalServerError().message))
+          }
+        }
         const payload = {
           _id: account._id,
           email:account.local.email,

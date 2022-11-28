@@ -153,7 +153,7 @@ var that = module.exports = {
   updateStatusOrderBySeller: async (req, res) => {
     try {
       const { orderId } = req.body
-      const payload = await orderService.updateStatusOrderBySeller(orderId)
+      const payload = await orderService.updateStatusOrderBySeller(req.payload.seller._id,orderId)
       res.json(payload)
     } catch (error) {
       res.status(error.status).json(error)
@@ -167,6 +167,15 @@ var that = module.exports = {
     try {
       const {orderId} = req.body
       const payload = await orderService.updateStatusOrderByShipper(orderId)
+      res.json(payload)
+    } catch (error) {
+      res.status(error.status).json(error)
+    }
+  },
+  getOrdersShipping: async (req, res) => {
+    const {currentPage, limit} = req.query
+    try {
+      const payload = await orderService.getOrdersShipping(req.payload._id, currentPage, limit)
       res.json(payload)
     } catch (error) {
       res.status(error.status).json(error)

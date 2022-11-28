@@ -446,7 +446,7 @@ var that = module.exports = {
                 cond: {$and:[
                   {$eq: ['$$item.isDeleted',false]},
                   {$eq: ['$$item.isCancel',false]},
-                  {$eq:[{"$size":"$$item.orderStatus"},1]}
+                  {$in:[{"$size":"$$item.orderStatus"},[1,2]]}
 
                 ]}
                 }
@@ -908,7 +908,6 @@ var that = module.exports = {
           }
         ])
         let payload = []
-        console.log(productOrdered)
         productOrdered.map((item) => {
           let reservations = []
           item.orders.forEach((order) =>{
@@ -923,7 +922,7 @@ var that = module.exports = {
           return
         })
 
-        return resolve(getPaginatedItems(payload, queryStr.curentPage, queryStr.limit))
+        return resolve(getPaginatedItems(payload, queryStr.currentPage, queryStr.limit))
         
       } catch (error) {
         console.log(error)
@@ -931,9 +930,11 @@ var that = module.exports = {
       }
     })
   },
-  updateStatusOrderBySeller: (orderId) => {
+  updateStatusOrderBySeller: (sellerId, orderId) => {
     return new Promise(async (resolve,reject) => {
       try {
+        console.log("sellerId::", sellerId)
+        console.log("orderId:::", orderId)
         const updated = await orderModel.aggregate([
           {$match: {
             "items":{$elemMatch: {_id:new mongoose.Types.ObjectId(orderId)}}
@@ -946,7 +947,8 @@ var that = module.exports = {
                   as: 'item',
                   cond: {$and:[
                     {$eq: ['$$item._id', new mongoose.Types.ObjectId(orderId)]},
-                    {$eq:['$$item.isDeleted', false]}                
+                    {$eq:['$$item.isDeleted', false]} ,
+                    {$eq:['$$item.isCancel', false]}                
                   ]}
                   
                 }
@@ -957,6 +959,17 @@ var that = module.exports = {
         
         if(_.isEmpty(updated)) return reject(errorResponse(404, createError.NotFound().message))
         if(_.isEmpty(updated.at(0).items)) return reject(errorResponse(405, Message.order_deleted))
+        
+        const product = await productModel.findOne({
+          _id: updated.at(0).items.at(0).product
+        })
+        .select("sellerId")
+        .lean()
+
+        if(!product.sellerId === sellerId){
+          return reject(errorResponse(403, Message.product_not_owner))
+        }
+        
         const currentStatus = updated.at(0).items.at(0).orderStatus.at(-1).type
         if(currentStatus !== "ordered" && currentStatus !== "packed"){
           return reject(errorResponse(403, Message.update_order_status_permission))
@@ -1066,6 +1079,95 @@ var that = module.exports = {
           }
         })
 
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, createError.InternalServerError().message))
+      }
+    })
+  },
+  // shipper processing orders
+  getOrdersShipping:(shipperId, page, limit) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const shippingCode = await shippingModel.find({
+          user: shipperId
+        })
+        .select("-_id code")
+        .lean()
+        const codeList = shippingCode.map((code) => {
+          return code.code
+        })
+        
+        const orders = await orderModel.aggregate([
+          {$match: {"items": {$elemMatch: {shippingCode: {"$in": codeList}}}}},
+          {
+            $project:{
+              items: {$filter: {
+                input: '$items',
+                as: 'item',
+                cond: {$and:[
+                  {$eq: ['$$item.isCancel',false]},
+                  {$eq:['$$item.isDeleted',false]},
+                  {$gte:[{"$size":"$$item.orderStatus"}, 3]}
+                ]}
+                }
+              },
+              address: 1,
+              paymentType:1,
+              createdAt: 1
+            }
+          },
+          { "$match": { "items.0": { "$exists": true } } },
+          {$sort:{createdAt: -1}},
+          { $unwind: "$items" },
+          {
+            $lookup: {
+              from: "products",
+              localField: "items.product",
+              foreignField: "_id",
+              pipeline : [
+                { $project: {
+                  name:1,
+                  productPictures: 1,
+                  quantity: 1,
+                }}
+              ],
+              as: "product"
+           }
+          },
+          {
+            $unwind: "$product"
+          },
+          { $set: {
+            "items.product": "$product"
+          }},
+          { $group: {
+            _id: "$_id",
+            address:{"$first":"$address"},
+            paymentType:{"$first":"$paymentType"},
+            items: { $push: "$items" }
+          }}
+        ])
+
+        if(_.isEmpty(orders)) return reject(errorResponse(404, createError.NotFound().message))
+        let payload = []
+        
+        orders.forEach((item) => {
+          let reservations = []
+          item.items.forEach((order) =>{
+              if(_.isEmpty(order) === false && order.orderStatus.at(-1).isCompleted === false) {
+                reservations = [...reservations, {...order,
+                  orderId: item._id,
+                  address: item.address,
+                  paymentType: item.paymentType
+                }]
+              }
+          })
+          payload = [...payload, ...reservations]
+        })
+
+        if(_.isEmpty(payload)) return reject(errorResponse(404, createError.NotFound().message))
+        return resolve(getPaginatedItems(payload, page, limit))
       } catch (error) {
         console.log(error)
         return reject(errorResponse(500, createError.InternalServerError().message))

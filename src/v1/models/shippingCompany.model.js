@@ -5,9 +5,9 @@ const shippingCompanySchema = new mongoose.Schema({
       type: String,
       require: true
     }
-}, {
-  collection:"shippingCompany",
-  timestamps: true
-}
+  }, {
+    collection:"shippingCompany",
+    timestamps: true
+  }
 )
 module.exports = mongoose.model("shippingCompany", shippingCompanySchema)

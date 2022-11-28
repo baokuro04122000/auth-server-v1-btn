@@ -24,7 +24,8 @@ module.exports = orderRouter= (router) => {
   router.get('/order/all-orders-completed', isAuthMobile, orderController.getAllOrdersCompletedUser)
   //seller
   router.get('/seller/orders-processing',isAuthSeller, orderController.getOrdersNotDoneOfSeller)
-  router.put('/seller/status-order', orderController.updateStatusOrderBySeller)
+  router.put('/seller/status-order',isAuthSeller, orderController.updateStatusOrderBySeller)
   //shipper
   router.put('/shipper/status-order', orderController.updateStatusOrderByShipper)
+  router.get('/shipper/all-orders-shipping', isAuthMobile, orderController.getOrdersShipping)
 }

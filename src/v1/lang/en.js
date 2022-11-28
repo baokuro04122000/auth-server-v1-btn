@@ -88,10 +88,10 @@ module.exports = {
   "addressId_not_found":"Address Id not found",
   "shipping_code_not_found":"The shipping code not found",
   "out_of_stock":"out of stock",
-  "update_order_status_permission":"You are not authorized to update the shipping status.",
+  "update_order_status_permission":"You are not authorized to update this status.",
   "done_order":"This order is done!!!",
   "order_deleted":"This order is deleted by seller",
-  "cancel_order_success":"Cancel the order is success"
-  
+  "cancel_order_success":"Cancel the order is success",
+  "product_not_owner":"This product is not your"  
   
 }
