@@ -7,7 +7,7 @@
     "start": "pm2-runtime start ecosystem.config.js",
     "dev": "nodemon server.js",
     "redis-commander": "redis-commander",
-    "test-performance": "autocannon http://localhost:4000/v1/categories",
+    "test-performance": "autocannon https://auth-server-v1-btn-production.up.railway.app/v1/categories",
     "cluster": "pm2 start server.js -i 0",
     "check": "pm2 ls",
     "stop": "pm2 stop external",

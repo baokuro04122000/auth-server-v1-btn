@@ -85,7 +85,7 @@ var that = module.exports = {
           populate:[
             {
               path: "sellerId",
-              select:"info -_id"
+              select:"info"
             },
             {
               path: "category",
@@ -114,6 +114,8 @@ var that = module.exports = {
                 ...item,
                 product: {
                   ...item.product,
+                  seller:item.product.sellerId,
+                  sellerId: item.product.sellerId._id,
                   specs: convertSpecsInProduct(item.product), 
                   productPictures: item.product.productPictures[0]
                 },
