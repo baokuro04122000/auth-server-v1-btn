@@ -4,6 +4,7 @@ const { errorResponse } = require('../utils')
 const createError = require('http-errors')
 const Message = require('../lang/en')
 const _ = require('lodash')
+const mongoose = require('mongoose')
 const { totalPriceProduct, convertSpecsInProduct } = require('../utils')
 var that = module.exports = {
   addToCart: (userId,cartItem) => {
@@ -12,18 +13,28 @@ var that = module.exports = {
         const productExists = await productModel.findOne({
           _id: cartItem.product
         }).lean()
-        console.log(productExists)
+       
         if(_.isEmpty(productExists)) return reject(errorResponse(404, Message.product_not_found))
-        const cart = await cartModel.findOne({ user: userId }).lean()
+        const cartExists = cartModel.findOne({
+          user: userId
+        }).lean()
+
+        const productAlready = cartModel.exists({
+          $and:[
+            {user: userId},
+            {cartItems: {$elemMatch: {product: cartItem.product}}}
+          ]
+        })
+
+        const [cart , productAdded] = await Promise.all([cartExists, productAlready])
+
+
         if (!_.isEmpty(cart)) {
-          const product = cartItem.product
-          //const variant = cartItem.variant
-          const item = cart.cartItems.find(c => c.product == product)
-          let condition, update
-          if (item) {
+          
+          if (productAdded) {
             condition = { $and:[
               {user: userId},
-              {cartItems: {$elemMatch:{product: product}}}
+              {cartItems: {$elemMatch:{product: cartItem.product}}}
             ]}
             update = {
                 $set: {
@@ -42,7 +53,6 @@ var that = module.exports = {
             cartModel.findOneAndUpdate(condition, update,
             { new: true, upsert: true, setDefaultsOnInsert: false })
             .exec((error, cart) => {
-              console.log(error)
               if (error) return reject(errorResponse(500, createError.InternalServerError().message))
               if (!_.isEmpty(cart)) {
                   return resolve({
