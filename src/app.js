@@ -21,7 +21,7 @@ const apiLimiter = rateLimit({
 process.env.UV_THREADPOOL_SIZE = os.cpus().length
 
 //user middleware
-//app.use('/v1', apiLimiter)
+app.use('/v1', apiLimiter)
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
