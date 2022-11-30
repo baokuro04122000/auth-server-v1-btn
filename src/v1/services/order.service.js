@@ -121,7 +121,8 @@ var that = module.exports = {
             "address.$.address": address.address,
             "address.$.addressCode.district":address.addressCode.district,
             "address.$.addressCode.province":address.addressCode.province,
-            "address.$.addressCode.ward":address.addressCode.ward
+            "address.$.addressCode.ward":address.addressCode.ward,
+            "address.$.addressCode.street":address.addressCode.street
           }
         })
         if(!deliveryInfo.modifiedCount) return reject(errorResponse(404, createError.NotFound().message))
