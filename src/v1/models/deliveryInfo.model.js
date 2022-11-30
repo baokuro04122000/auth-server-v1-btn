@@ -25,7 +25,7 @@ const addressSchema = new mongoose.Schema({
         district: {type: Number, default: 1},
         province: {type: Number, default: 1},
         ward:{type: Number, default: 1},
-        street:{type: Number, default: 1}
+        street:{type: String, default: ""}
     },
     zipCode:{
         type: Number,
