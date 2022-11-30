@@ -8,7 +8,12 @@ var that = module.exports = {
         zipCode: address.zipCode,
         phoneNumber: address.phoneNumber,
         address: address.address,
-        code: address.code
+        addressCode: {
+          district: address.district,
+          province: address.provinceId,
+          ward: address.wardId
+        },
+        code: address.code,
       })
       res.json(payload)
     } catch (error) {
@@ -42,7 +47,12 @@ var that = module.exports = {
           zipCode: address.zipCode,
           phoneNumber: address.phoneNumber,
           address: address.address,
-          code: address.code
+          code: address.code,
+          addressCode:{
+            district: address.addressCode.district,
+            province: address.addressCode.provinceId,
+            ward: address.addressCode.wardId
+          }
         })
       res.json(payload)
     } catch (error) {

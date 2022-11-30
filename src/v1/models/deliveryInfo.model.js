@@ -21,6 +21,11 @@ const addressSchema = new mongoose.Schema({
         min: 10,
         max: 100,
     },
+    addressCode:{
+        district: {type: Number, default: 1},
+        province: {type: Number, default: 1},
+        ward:{type: Number, default: 1}
+    },
     zipCode:{
         type: Number,
         max:999999,

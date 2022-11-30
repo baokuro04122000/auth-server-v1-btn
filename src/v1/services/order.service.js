@@ -107,6 +107,7 @@ var that = module.exports = {
   updateDeliveryInfo: (userId, addressId, address) => {
     return new Promise(async (resolve, reject) => {
       try {
+        console.log(address)
         const deliveryInfo = await deliveryModel.findOne({
           user: userId
         }).
@@ -117,7 +118,10 @@ var that = module.exports = {
             "address.$.name": address.name,
             "address.$.zipCode": address.zipCode,
             "address.$.phoneNumber": address.phoneNumber,
-            "address.$.address": address.address
+            "address.$.address": address.address,
+            "address.$.addressCode.district":address.addressCode.district,
+            "address.$.addressCode.province":address.addressCode.province,
+            "address.$.addressCode.ward":address.addressCode.ward
           }
         })
         if(!deliveryInfo.modifiedCount) return reject(errorResponse(404, createError.NotFound().message))
