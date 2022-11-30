@@ -9,9 +9,9 @@ var that = module.exports = {
         phoneNumber: address.phoneNumber,
         address: address.address,
         addressCode: {
-          district: address.district,
-          province: address.provinceId,
-          ward: address.wardId,
+          district: address.addressCode.district,
+          province: address.addressCode.province,
+          ward: address.addressCode.ward,
           street: address.addressCode.street
         },
         code: address.code,
@@ -51,8 +51,8 @@ var that = module.exports = {
           code: address.code,
           addressCode:{
             district: address.addressCode.district,
-            province: address.addressCode.provinceId,
-            ward: address.addressCode.wardId,
+            province: address.addressCode.province,
+            ward: address.addressCode.ward,
             street: address.addressCode.street
           }
         })
