@@ -11,7 +11,8 @@ var that = module.exports = {
         addressCode: {
           district: address.district,
           province: address.provinceId,
-          ward: address.wardId
+          ward: address.wardId,
+          street: address.addressCode.street
         },
         code: address.code,
       })
@@ -51,7 +52,8 @@ var that = module.exports = {
           addressCode:{
             district: address.addressCode.district,
             province: address.addressCode.provinceId,
-            ward: address.addressCode.wardId
+            ward: address.addressCode.wardId,
+            street: address.addressCode.street
           }
         })
       res.json(payload)
