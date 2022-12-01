@@ -396,7 +396,7 @@ var that = module.exports = {
         })
         .populate({
           path:"items.product",
-          select:"name sellerId category summary productPictures specs _id",
+          select:"name sellerId category slug summary productPictures specs _id",
           populate:[
             {
               path: "sellerId",
