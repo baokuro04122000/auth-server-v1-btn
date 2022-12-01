@@ -178,7 +178,7 @@ var that = module.exports = {
   updateStatusOrderByShipper: async (req, res) => {
     try {
       const {orderId} = req.body
-      const payload = await orderService.updateStatusOrderByShipper(orderId)
+      const payload = await orderService.updateStatusOrderByShipper(req.payload._id,orderId)
       res.json(payload)
     } catch (error) {
       res.status(error.status).json(error)

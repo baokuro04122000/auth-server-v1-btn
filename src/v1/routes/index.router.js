@@ -7,6 +7,7 @@ const cartRouter = require('./cart.router')
 const profileRouter = require('./profile.router')
 const sellerRouter = require('./seller.router')
 const orderRouter = require('./order.router')
+const paymentRouter = require('./payment.router')
 router.get('/checkstatus',async (req, res, next) => {
     try {
        
@@ -26,4 +27,5 @@ cartRouter(router)
 profileRouter(router)
 sellerRouter(router)
 orderRouter(router)
+paymentRouter(router)
 module.exports = router;

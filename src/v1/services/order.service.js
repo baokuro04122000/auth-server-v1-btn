@@ -216,7 +216,10 @@ var that = module.exports = {
             return reject(errorResponse(408, product.name + Message.out_of_stock))
           } 
           return {
-            product: product._id,
+            product: product._id.toString(),
+            sku:product._id.toString(),
+            name:product.name,
+            currency:"VND",
             discount: product.discountPercent,
             quantity: item.quantity,
             shippingCode: item.shippingCode,
@@ -325,12 +328,59 @@ var that = module.exports = {
               orderId: ordered._id
             }
           })  
-        }else{
-          return reject(errorResponse(501, 'the server is developing this function'))
+        }
+        if(order.paymentType === 'paypal'){
+          const orderPayload = {
+            user: userId,
+            address: addressSend,
+            totalAmount: mergeDataProducts.reduce((total, current) => total + current.totalPaid, 0),
+            items: mergeDataProducts,
+            paymentStatus: "pending",
+            paymentType:order.paymentType,
+            shippingCost: mergeDataProducts.reduce((total, current) => total + current.shippingCost, 0),
+            orderStatus: {
+              type: "ordered",
+              date: Date.now(),
+              isCompleted: false
+            }
+          }
+          const orderPayloadPayPal = {
+            "item_list": {
+              "items": mergeDataProducts
+            },
+            "amount": {
+                "currency": "VND",
+                "total": orderPayload.totalAmount,
+                "details": {
+                  "shipping": orderPayload.shippingCost,
+                }
+            },
+            "description": "please check your order information"
+          }
+
+          const success = await (await fetch(process.env.REDIRECT_PAYPAL_PAYMENT,
+            {
+              method: 'POST', // *GET, POST, PUT, DELETE, etc.
+              mode: 'cors', // no-cors, *cors, same-origin
+              cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+              credentials: 'same-origin', // include, *same-origin, omit
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              redirect: 'follow', // manual, *follow, error
+              referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+              body: JSON.stringify({
+                paymentType:'paypal',
+                orderPayload: orderPayloadPayPal
+              }) // body data type must match "Content-Type" header
+            })).json()
+          
+          console.log(productList)
+          console.log(orderPayload)
         }
       } catch (error) {
         console.log(error)
-            return reject(errorResponse(500, createError.InternalServerError().message))
+        return reject(errorResponse(500, createError.InternalServerError().message))
       }
             
     })
@@ -346,7 +396,7 @@ var that = module.exports = {
         })
         .populate({
           path:"items.product",
-          select:"name sellerId category summary productPictures specs -_id",
+          select:"name sellerId category summary productPictures specs _id",
           populate:[
             {
               path: "sellerId",
@@ -938,8 +988,7 @@ var that = module.exports = {
   updateStatusOrderBySeller: (sellerId, orderId) => {
     return new Promise(async (resolve,reject) => {
       try {
-        console.log("sellerId::", sellerId)
-        console.log("orderId:::", orderId)
+       
         const updated = await orderModel.aggregate([
           {$match: {
             "items":{$elemMatch: {_id:new mongoose.Types.ObjectId(orderId)}}
@@ -1018,12 +1067,19 @@ var that = module.exports = {
       }
     })
   },
-  updateStatusOrderByShipper: (orderId) => {
+  updateStatusOrderByShipper: (shipperId,orderId) => {
     return new Promise(async (resolve, reject) => {
       try {
+        const shipper = await shippingModel.findOne({
+          user: shipperId
+        }).lean()
+        if(!shipper) return reject(errorResponse(404, createError.NotFound().message))
         const updated = await orderModel.aggregate([
           {$match: {
-            "items":{$elemMatch: {_id:new mongoose.Types.ObjectId(orderId)}}
+            "items":{$elemMatch: {$and: [
+              {_id:new mongoose.Types.ObjectId(orderId)},
+              {shippingCode: shipper.code}
+            ]}}
           }},
           {
             $project:{
@@ -1040,6 +1096,7 @@ var that = module.exports = {
             }
           }
         ])
+        console.log(updated)
         if(_.isEmpty(updated)) return reject(errorResponse(404, createError.NotFound().message))
         const currentStatus = updated.at(0).items.at(0).orderStatus.at(-1)
         if(!(currentStatus.type === "shipped" || currentStatus.type === "delivered")){
