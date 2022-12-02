@@ -272,7 +272,7 @@ var that  = module.exports = {
       } catch (error) {
         res.status(error.status).json(error)
       }
-  },
+},
   OTPCodeResetPassword:async (req, res) => {
     const {userId, otp} = req.body
     try {

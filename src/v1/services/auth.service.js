@@ -667,7 +667,7 @@ var that = module.exports = {
           return reject(errorResponse(400, Message.account_inactive))
         }
         const otp = generateOtp(6);
-        console.log(otp)
+        
         (await otpModel.find({user: getUser._id})).map((value) => value.remove())
         await new otpModel({
           user: getUser._id,
@@ -678,6 +678,7 @@ var that = module.exports = {
           otp:otp,
           name: getUser.info.firstName + getUser.info.lastName
         }))
+       
         return resolve({
           data:{
             message:Message.send_mail_reset_success
