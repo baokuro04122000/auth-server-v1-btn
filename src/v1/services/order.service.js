@@ -464,7 +464,6 @@ var that = module.exports = {
 
         const [totalOrders, orders] = await Promise.all([countDocument, list])
 
-        console.log(orders)
 
         const orderList = orders.map((order) => {
           return {
@@ -626,7 +625,8 @@ var that = module.exports = {
                   productPictures: 1,
                   quantity: 1,
                   slug:1,
-                  _id: 1
+                  _id: 1,
+                  sellerId: 1
                 }}
               ],
               as: "product"
@@ -725,6 +725,7 @@ var that = module.exports = {
                   name:1,
                   productPictures: 1,
                   quantity: 1,
+                  sellerId: 1
                 }}
               ],
               as: "product"
@@ -824,7 +825,8 @@ var that = module.exports = {
                   productPictures: 1,
                   quantity: 1,
                   slug:1,
-                  _id: 1
+                  _id: 1,
+                  sellerId: 1
                 }}
               ],
               as: "product"
@@ -864,6 +866,7 @@ var that = module.exports = {
             items: { $push: "$items" }
           }}
         ])
+        
         if(_.isEmpty(ordered)) return reject(errorResponse(404, createError.NotFound().message))
         let payload = []
         
@@ -923,6 +926,7 @@ var that = module.exports = {
                   name:1,
                   productPictures: 1,
                   quantity: 1,
+                  sellerId: 1
                 }}
               ],
               as: "product"
