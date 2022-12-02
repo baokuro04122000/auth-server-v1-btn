@@ -20,6 +20,7 @@ module.exports = orderRouter= (router) => {
   router.post('/order/cancel-order-item', isAuthMobile, orderController.cancelOrderItem)
   router.post('/order/cancel-order', isAuthMobile, orderController.cancelOrder)
   router.get('/order/get-all-orders-cancel', isAuthMobile, orderController.getAllOrdersCancelUser)
+  router.get('/order/all-orders-packed', isAuthMobile, orderController.getAllOrdersPackedUser)
   router.get('/order/all-orders-shipping', isAuthMobile, orderController.getAllOrdersShippingUser)
   router.get('/order/all-orders-completed', isAuthMobile, orderController.getAllOrdersCompletedUser)
   //seller

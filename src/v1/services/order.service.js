@@ -400,7 +400,7 @@ var that = module.exports = {
           populate:[
             {
               path: "sellerId",
-              select: "info type logo -_id"
+              select: "info type logo _id slug"
             },
             {
               path:"category",
@@ -415,6 +415,8 @@ var that = module.exports = {
             ...item,
             product:{
               ...item.product,
+              sellerId: item.product.sellerId._id,
+              seller: item.product.sellerId,
               specs: convertSpecsInProduct(item.product)
             },
             orderStatus: item.orderStatus
@@ -423,7 +425,7 @@ var that = module.exports = {
 
         const payload = {
           ...order,
-          orderStatus: order.orderStatus.pop(),
+          orderStatus: order.orderStatus.at(-1),
           items: items
         }
 
@@ -501,7 +503,7 @@ var that = module.exports = {
                 cond: {$and:[
                   {$eq: ['$$item.isDeleted',false]},
                   {$eq: ['$$item.isCancel',false]},
-                  {$in:[{"$size":"$$item.orderStatus"},[1,2]]}
+                  {$eq:[{"$size":"$$item.orderStatus"},1]}
 
                 ]}
                 }
@@ -524,16 +526,40 @@ var that = module.exports = {
                   name:1,
                   productPictures: 1,
                   quantity: 1,
+                  slug: 1,
+                  _id: 1,
+                  sellerId: 1
                 }}
               ],
               as: "product"
            }
           },
           {
+            $lookup: {
+              from: "sellers",
+              localField: "product.sellerId",
+              foreignField: "_id",
+              pipeline : [
+                { $project: {
+                  info:1,
+                  logo: 1,
+                  type: 1,
+                  slug: 1,
+                  _id: 1
+                }}
+              ],
+              as: "seller"
+           }
+          },
+          {
             $unwind: "$product"
           },
+          {
+            $unwind: "$seller"
+          },
           { $set: {
-            "items.product": "$product"
+            "items.product": "$product",
+            "items.seller":"$seller"
           }},
           { $group: {
             _id: "$_id",
@@ -599,16 +625,39 @@ var that = module.exports = {
                   name:1,
                   productPictures: 1,
                   quantity: 1,
+                  slug:1,
+                  _id: 1
                 }}
               ],
               as: "product"
            }
           },
           {
+            $lookup: {
+              from: "sellers",
+              localField: "product.sellerId",
+              foreignField: "_id",
+              pipeline : [
+                { $project: {
+                  info:1,
+                  logo: 1,
+                  type: 1,
+                  slug: 1,
+                  _id: 1
+                }}
+              ],
+              as: "seller"
+           }
+          },
+          {
             $unwind: "$product"
           },
+          {
+            $unwind: "$seller"
+          },
           { $set: {
-            "items.product": "$product"
+            "items.product": "$product",
+            "items.seller":"$seller"
           }},
           { $group: {
             _id: "$_id",
@@ -682,10 +731,131 @@ var that = module.exports = {
            }
           },
           {
+            $lookup: {
+              from: "sellers",
+              localField: "product.sellerId",
+              foreignField: "_id",
+              pipeline : [
+                { $project: {
+                  info:1,
+                  logo: 1,
+                  type: 1,
+                  slug: 1,
+                  _id: 1
+                }}
+              ],
+              as: "seller"
+           }
+          },
+          {
             $unwind: "$product"
           },
+          {
+            $unwind: "$seller"
+          },
           { $set: {
-            "items.product": "$product"
+            "items.product": "$product",
+            "items.seller":"$seller"
+          }},
+          { $group: {
+            _id: "$_id",
+            address:{"$first":"$address"},
+            paymentType:{"$first":"$paymentType"},
+            items: { $push: "$items" }
+          }}
+        ])
+        if(_.isEmpty(ordered)) return reject(errorResponse(404, createError.NotFound().message))
+        let payload = []
+        
+        ordered.forEach((item) => {
+          let reservations = []
+          item.items.forEach((order) =>{
+              if(_.isEmpty(order) === false && order.orderStatus.at(-1).isCompleted === false) {
+                reservations = [...reservations, {...order,
+                  orderId: item._id,
+                  address: item.address,
+                  paymentType: item.paymentType
+                }]
+              }
+          })
+          payload = [...payload, ...reservations]
+        })
+        if(_.isEmpty(payload)) return reject(errorResponse(404, createError.NotFound().message))
+        return resolve(getPaginatedItems(payload, page, limit))
+      } catch (error) {
+        console.log(error)
+        return reject(errorResponse(500, createError.InternalServerError().message))
+      }
+    })
+  },
+  getAllOrdersPackedByUser: (userId, page, limit) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const ordered =await orderModel.aggregate([
+          {$match:{user:new mongoose.Types.ObjectId(userId)}},
+          {
+            $project:{
+              items: {$filter: {
+                input: '$items',
+                as: 'item',
+                cond: {$and:[
+                  {$eq: ['$$item.isCancel',false]},
+                  {$eq:['$$item.isDeleted',false]},
+                  {$in:[{"$size":"$$item.orderStatus"}, [2,3]]}
+                ]}
+                }
+              },
+              address: 1,
+              paymentType:1,
+              createdAt: 1
+            }
+          },
+          { "$match": { "items.0": { "$exists": true } } },
+          {$sort:{createdAt: -1}},
+          { $unwind: "$items" },
+          {
+            $lookup: {
+              from: "products",
+              localField: "items.product",
+              foreignField: "_id",
+              pipeline : [
+                { $project: {
+                  name:1,
+                  productPictures: 1,
+                  quantity: 1,
+                  slug:1,
+                  _id: 1
+                }}
+              ],
+              as: "product"
+           }
+          },
+          {
+            $lookup: {
+              from: "sellers",
+              localField: "product.sellerId",
+              foreignField: "_id",
+              pipeline : [
+                { $project: {
+                  info:1,
+                  logo: 1,
+                  type: 1,
+                  slug: 1,
+                  _id: 1
+                }}
+              ],
+              as: "seller"
+           }
+          },
+          {
+            $unwind: "$product"
+          },
+          {
+            $unwind: "$seller"
+          },
+          { $set: {
+            "items.product": "$product",
+            "items.seller":"$seller"
           }},
           { $group: {
             _id: "$_id",
@@ -759,10 +929,31 @@ var that = module.exports = {
            }
           },
           {
+            $lookup: {
+              from: "sellers",
+              localField: "product.sellerId",
+              foreignField: "_id",
+              pipeline : [
+                { $project: {
+                  info:1,
+                  logo: 1,
+                  type: 1,
+                  slug: 1,
+                  _id: 1
+                }}
+              ],
+              as: "seller"
+           }
+          },
+          {
             $unwind: "$product"
           },
+          {
+            $unwind: "$seller"
+          },
           { $set: {
-            "items.product": "$product"
+            "items.product": "$product",
+            "items.seller":"$seller"
           }},
           { $group: {
             _id: "$_id",

@@ -58,6 +58,10 @@ const orderSchema = new mongoose.Schema({
             type: Boolean,
             default: false
         },
+        seller:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "sellers",
+        },
         orderStatus: [{
             type: {
                 type: String,

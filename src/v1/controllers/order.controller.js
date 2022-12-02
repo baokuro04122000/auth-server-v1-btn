@@ -116,6 +116,15 @@ var that = module.exports = {
       res.status(error.status).json(error)
     }
   },
+  getAllOrdersPackedUser: async (req, res) => {
+    const {currentPage, limit} = req.query
+    try {
+      const payload = await orderService.getAllOrdersPackedByUser(req.payload._id, currentPage, limit)    
+      res.json(payload)
+    } catch (error) {
+      res.status(error.status).json(error)
+    }
+  },
   getAllOrdersShippingUser: async (req, res) => {
     const {currentPage, limit} = req.query
     try {
