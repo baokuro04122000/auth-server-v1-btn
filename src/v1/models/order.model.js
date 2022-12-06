@@ -15,6 +15,10 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    subtotal:{
+        type: Number,
+        required: true
+    },
     items: [{
         product: {
             type: mongoose.Schema.Types.ObjectId,
@@ -27,6 +31,11 @@ const orderSchema = new mongoose.Schema({
         shippingCode:{
             type: Number,
             required: true
+        },
+        currency:{
+            type: String,
+            enum: ["VND", "USD"],
+            default: "VND"
         },
         discount:{
             type: Number,

@@ -4,8 +4,10 @@ const {
   errorResponse,
   totalPriceProduct,
   convertSpecsInProduct,
-  getPaginatedItems
+  getPaginatedItems,
+  convertCurrencyVNDToUSD
 } = require('../utils')
+
 const APIFeatures = require('../utils/apiFeatures')
 const Message = require('../lang/en')
 const createError = require('http-errors')
@@ -15,8 +17,11 @@ const inventoryModel = require('../models/inventory.model')
 const shippingCompanyModel = require('../models/shippingCompany.model')
 const shippingModel = require('../models/shipping.model')
 const orderModel = require('../models/order.model')
+const paymentHistoryModel = require('../models/paymentHistory.model')
 const redis = require('../databases/init.redis')
 const mongoose = require('mongoose')
+const paypal = require('../middlewares/paypal.middleware')
+
 var that = module.exports = {
   addDeliveryInfo: (userId, address) => {
     return new Promise(async (resolve, reject) => {
@@ -199,7 +204,7 @@ var that = module.exports = {
           return productModel.findOne({
             _id: item.productId
           })
-          .select("price quantity maxOrder discountPercent name")
+          .select("price quantity maxOrder discountPercent name productPictures")
           .lean()
         })
 
@@ -219,13 +224,14 @@ var that = module.exports = {
             product: product._id.toString(),
             sku:product._id.toString(),
             name:product.name,
-            currency:"VND",
+            productPictures: product.productPictures.at(0).fileLink,
             discount: product.discountPercent,
             quantity: item.quantity,
             shippingCode: item.shippingCode,
             shippingCost:shippingCost.price,
             price: product.price,
             totalPaid: totalPriceProduct(product.price, item.quantity, product.discountPercent)+shippingCost.price ,
+            priceDiscount:product.price*item.quantity - totalPriceProduct(product.price, item.quantity, product.discountPercent)+shippingCost.price,
             orderStatus: {
               type: "ordered",
               date: Date.now(),
@@ -239,6 +245,7 @@ var that = module.exports = {
             address: addressSend,
             totalAmount: mergeDataProducts.reduce((total, current) => total + current.totalPaid, 0),
             items: mergeDataProducts,
+            subtotal:mergeDataProducts.reduce((total, current) => total + totalPriceProduct(current.price, current.quantity, current.discount), 0),
             paymentStatus: "pending",
             paymentType:order.paymentType,
             shippingCost: mergeDataProducts.reduce((total, current) => total + current.shippingCost, 0),
@@ -344,39 +351,96 @@ var that = module.exports = {
               isCompleted: false
             }
           }
+          let subtotal = 0;
+          //let discount = 0;
+          const item_list = mergeDataProducts.map(item => {
+            subtotal += convertCurrencyVNDToUSD(totalPriceProduct(item.price, 1, item.discount)*item.quantity)
+            //discount += convertCurrencyVNDToUSD(item.priceDiscount)
+            return {
+              "name": item.name,
+              "currency":"USD",
+              "sku": item.product,
+              "quantity": item.quantity,
+              "price":convertCurrencyVNDToUSD(totalPriceProduct(item.price, 1, item.discount))
+             // "image_url":item.productPictures ? item.productPictures : "ahsdjs"
+            }
+          })
+        
           const orderPayloadPayPal = {
-            "item_list": {
-              "items": mergeDataProducts
+            "intent": "sale",
+            "payer": {
+              "payment_method": order.paymentType
             },
-            "amount": {
-                "currency": "VND",
-                "total": orderPayload.totalAmount,
-                "details": {
-                  "shipping": orderPayload.shippingCost,
-                }
+            "redirect_urls": {
+              "return_url": process.env.REDIRECT_PAYPAL_SUCCESS,
+              "cancel_url": process.env.REDIRECT_PAYPAL_CANCEL
             },
-            "description": "please check your order information"
+            "transactions": [
+              {
+                "amount": {
+                    "currency": "USD",
+                    "total": Math.round((subtotal + convertCurrencyVNDToUSD(orderPayload.shippingCost) + Number.EPSILON) * 100) / 100,
+                    "details": {
+                        "subtotal": Math.round((Number(subtotal) + Number.EPSILON) * 100) / 100,
+                        "shipping": convertCurrencyVNDToUSD(orderPayload.shippingCost)
+                    }
+                },
+                "item_list": {
+                    "items": item_list
+                },
+                "description": "Payment description"
+              }
+            ]
           }
-
-          const success = await (await fetch(process.env.REDIRECT_PAYPAL_PAYMENT,
-            {
-              method: 'POST', // *GET, POST, PUT, DELETE, etc.
-              mode: 'cors', // no-cors, *cors, same-origin
-              cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-              credentials: 'same-origin', // include, *same-origin, omit
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              redirect: 'follow', // manual, *follow, error
-              referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-              body: JSON.stringify({
-                paymentType:'paypal',
-                orderPayload: orderPayloadPayPal
-              }) // body data type must match "Content-Type" header
-            })).json()
           
-          console.log(productList)
-          console.log(orderPayload)
+          paypal.payment.create(JSON.stringify(orderPayloadPayPal), function (error, payment) {
+            if (error) {
+                console.log(error)
+                return reject({
+                  status:400,
+                  error: error
+                })
+            } else {
+              console.log(payment)
+                payment.links.forEach(async (link) => {
+                  if(link.rel === 'approval_url') {
+                    await new paymentHistoryModel({
+                      address: addressSend,
+                      payId: payment.id,
+                      user:userId,
+                      items:mergeDataProducts.map((product) => {
+                        return {
+                          ...product,
+                          price: convertCurrencyVNDToUSD(product.price),
+                          totalPaid: convertCurrencyVNDToUSD(totalPriceProduct(product.price,product.quantity,product.discount)),
+                          shippingCost:convertCurrencyVNDToUSD(product.shippingCost),
+                          orderStatus: [
+                            {
+                              type: "ordered",
+                              date: Date.now(),
+                              isCompleted: true
+                            },
+                            {
+                              type: "packed",
+                              date: Date.now(),
+                              isCompleted: false
+                            }
+                          ]
+                          
+                        }
+                      })
+                    }).save()
+
+                    return resolve({
+                      data:{
+                        link: link.href,
+                        paymentId: payment.id
+                      }
+                    })
+                  } 
+                })
+            }
+          });
         }
       } catch (error) {
         console.log(error)

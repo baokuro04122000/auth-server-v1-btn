@@ -47,5 +47,8 @@ module.exports = {
       total_pages: Math.ceil(items.length / pgSize),
       data: pagedItems
     };
+  },
+  convertCurrencyVNDToUSD: (money) => {
+    return Math.round((Number(money)*0.00004080 + Number.EPSILON) * 100) / 100
   }
 } 
