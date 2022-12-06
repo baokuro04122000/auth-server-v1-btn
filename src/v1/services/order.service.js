@@ -214,6 +214,8 @@ var that = module.exports = {
           if(!item) return reject(errorResponse(404, Message.product_not_found))
         })
 
+        if(_.isEmpty(productList)) return reject(errorResponse(404, Message.product_is_empty))
+
         const mergeDataProducts = order.items.map((item) => {
           const product = productList.find((product) => product._id.toString() === item.productId)
           const shippingCost = shippingCostList.find((shipping)=> shipping.code === item.shippingCode)

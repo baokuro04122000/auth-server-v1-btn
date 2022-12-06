@@ -51,7 +51,22 @@ const paymentHistorySchema = new mongoose.Schema(
       shippingCost:{
           type: Number,
           default: 0
-      }
+      },
+      orderStatus: [{
+        type: {
+            type: String,
+            enum: ["ordered", "packed", "shipped", "delivered"],
+            default: "ordered"
+        },
+        date: {
+            type: Date,
+            default: Date.now()
+        },
+        isCompleted: {
+            type: Boolean,
+            default: false
+        }
+      }]
   }],
     paymentStatus: {
       type: String,
