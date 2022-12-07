@@ -15,6 +15,7 @@ const _ = require('lodash')
 const productModel = require('../models/product.model')
 const inventoryModel = require('../models/inventory.model')
 const shippingCompanyModel = require('../models/shippingCompany.model')
+const cartModel = require('../models/cart.model')
 const shippingModel = require('../models/shipping.model')
 const orderModel = require('../models/order.model')
 const paymentHistoryModel = require('../models/paymentHistory.model')
@@ -183,7 +184,19 @@ var that = module.exports = {
         })
         .select("address")
         .lean()
-  
+        const checkProductExistsInCart = order.items.map((product) => {
+          return cartModel.exists({
+            $and:[
+              {user: userId},
+              {"cartItems.product": product.productId}
+            ]
+          })
+        })
+        
+        const productValid = await Promise.all(checkProductExistsInCart)
+        
+        if(productValid.some((valid) => valid === null)) return reject(errorResponse(404, Message.product_not_exist_in_cart))
+
         if(!address) return reject(errorResponse(404, Message.addressId_not_found))
         const addressSend = address.address.find((item) => item._id.toString() === order.addressId)
         const shipping = [...order.items]
