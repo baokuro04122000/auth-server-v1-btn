@@ -8,6 +8,9 @@ const paymentHistorySchema = new mongoose.Schema(
       required: true,
       ref: "users",
     },
+    token:{
+      type: String
+    },
     order:{
       type: mongoose.Schema.Types.ObjectId,
       ref:"orders"

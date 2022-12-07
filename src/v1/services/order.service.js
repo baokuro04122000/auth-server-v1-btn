@@ -406,9 +406,11 @@ var that = module.exports = {
               console.log(payment)
                 payment.links.forEach(async (link) => {
                   if(link.rel === 'approval_url') {
+                    const token = link.href.split('token=').at(-1)
                     await new paymentHistoryModel({
                       address: addressSend,
                       payId: payment.id,
+                      token: token,
                       user:userId,
                       items:mergeDataProducts.map((product) => {
                         return {
@@ -516,7 +518,7 @@ var that = module.exports = {
         const list = new APIFeatures(orderModel.find({
           user: userId
         })
-        .select("totalAmount items.product items.orderStatus orderStatus")
+        .select("totalAmount items.product items.orderStatus orderStatus paymentType subtotal shippingCost")
         .populate({
           path:'items.product',
           select: "name productPictures"

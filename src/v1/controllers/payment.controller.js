@@ -83,7 +83,25 @@ var that = module.exports = {
     });
   },
   paypalPaymentCancel: async (req, res) => {
-    res.send('Cancelled')
+      const {token} = req.query
+      try {
+        await paymentHistoryModel.updateOne({
+          token: token
+        },{
+          $set:{
+            paymentStatus: "cancelled"
+          }
+        })
+
+        res.json({
+          data:{
+            message:"This payment is cancelled"
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        res.status(500).json(errorResponse(500, createError.InternalServerError().message))
+      }
   },
   paypalPaymentStatus: async (req, res) => {
     const {payId} = req.body 
