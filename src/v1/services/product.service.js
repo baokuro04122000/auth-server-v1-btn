@@ -61,13 +61,13 @@ var that = module.exports = {
   getProducts: (query, limit) => {
     return new Promise(async (resolve, reject) => {
       try {
-        const apiFeaturesCountDocuments = new APIFeatures(productModel, query)
+        const apiFeaturesCountDocuments = new APIFeatures(productModel, query) // (1)
         .search()
         .filter()
         .query
         .countDocuments()
 
-        const apiFeatures = new APIFeatures(productModel, query)
+        const apiFeatures = new APIFeatures(productModel, query) // (2)
         .search()
         .filter()
         .pagination(limit)
@@ -78,7 +78,7 @@ var that = module.exports = {
         })
         .populate('category category.name')
         .lean()
-        const [totalProduct, products] = await Promise.all([apiFeaturesCountDocuments,apiFeatures])
+        const [totalProduct, products] = await Promise.all([apiFeaturesCountDocuments,apiFeatures]) // (3)
 
         if(_.isEmpty(products)){
           return reject(errorResponse(404, Message.product_empty))

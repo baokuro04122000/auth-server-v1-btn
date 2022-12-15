@@ -34,8 +34,7 @@ const addressSchema = new mongoose.Schema({
     },
     code:{
         type: Number,
-        required: true,
-        unique: true
+        required: true
     },
     isDefault: {
         type: Boolean,
