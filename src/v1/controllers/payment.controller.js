@@ -1,6 +1,7 @@
 const paypal = require('../middlewares/paypal.middleware')
 const orderModel = require('../models/order.model')
 const paymentHistoryModel = require('../models/paymentHistory.model')
+const productModel = require('../models/product.model')
 const {
   errorResponse
 } = require('../utils')
@@ -69,7 +70,22 @@ var that = module.exports = {
               paymentDetails:paymentDetails
             }
           })
-          
+          console.log(payment.items)
+          const updateQuantity = payment.items.map((item) => {
+            return productModel.findOneAndUpdate({
+              _id: item.product
+            },{
+              $inc:{quantity:- Number(item.quantity)},
+              $inc: {"meta.totalOrder": 1}
+            }, {
+              new: true
+            })
+            .select("quantity sellerId")
+            .lean()
+          })
+
+          //update quantity of product
+          const updatedProduct = await Promise.all(updateQuantity)
           res.json({
             data:{
               paymentId: paymentId

@@ -275,7 +275,8 @@ var that = module.exports = {
             return productModel.findOneAndUpdate({
               _id: item.product
             },{
-              $inc:{quantity:- Number(item.quantity)}
+              $inc:{quantity:- Number(item.quantity)},
+              $inc: {"meta.totalOrder": 1}
             }, {
               new: true
             })
@@ -419,7 +420,7 @@ var that = module.exports = {
               console.log(payment)
                 payment.links.forEach(async (link) => {
                   if(link.rel === 'approval_url') {
-                    const token = link.href.split('token=').at(-1)
+                    const token = link.href?.split('token=').at(-1)
                     await new paymentHistoryModel({
                       address: addressSend,
                       payId: payment.id,
