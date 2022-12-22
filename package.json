@@ -50,5 +50,8 @@
     "nodemon": "^2.0.20",
     "redis-commander": "^0.8.0",
     "rollup": "^3.3.0"
+  },
+  "engines": {
+    "node": ">=17"
   }
 }
