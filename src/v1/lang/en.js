@@ -94,6 +94,11 @@ module.exports = {
   "cancel_order_success":"Cancel the order is success",
   "product_not_owner":"This product is not your",
   "payment_not_exists":"This payment is not exists",
-  "product_not_exist_in_cart":"Some products is not exists in your cart"
+  "product_not_exist_in_cart":"Some products is not exists in your cart",
+
+  "noti_confirm_order_success":"The seller confirmed your order",
+  "noti_titile_confirm_order_success":"The order confirmation",
+  "noti_confirm_shipping_success":"The shipper confirmed your order",
+  "noti_title_confirm_shipping_success":"The order confirmation"
   
 }

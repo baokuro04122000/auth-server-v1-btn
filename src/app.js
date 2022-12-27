@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+
 const helmet = require('helmet')
 const morgan = require('morgan')
 const compression = require('compression')
@@ -19,6 +20,7 @@ const apiLimiter = rateLimit({
 })
 //set thread pool in nodejs
 process.env.UV_THREADPOOL_SIZE = os.cpus().length
+
 
 //user middleware
 app.use('/v1', apiLimiter)

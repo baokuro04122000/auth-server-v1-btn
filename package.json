@@ -40,6 +40,7 @@
     "pm2": "^5.2.2",
     "shortid": "^2.2.16",
     "slugify": "^1.6.5",
+    "socket.io": "^4.5.4",
     "uuid": "^9.0.0",
     "winston": "^3.8.1",
     "xss-filters": "^1.2.7",

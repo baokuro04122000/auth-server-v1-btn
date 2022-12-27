@@ -7,7 +7,9 @@ const {
   getPaginatedItems,
   convertCurrencyVNDToUSD
 } = require('../utils')
-
+const {
+  emitNotifyToArray
+} = require('../utils/usersSocket')
 const APIFeatures = require('../utils/apiFeatures')
 const Message = require('../lang/en')
 const createError = require('http-errors')
@@ -15,6 +17,7 @@ const _ = require('lodash')
 const productModel = require('../models/product.model')
 const inventoryModel = require('../models/inventory.model')
 const shippingCompanyModel = require('../models/shippingCompany.model')
+const notificationModel = require('../models/notification.model')
 const cartModel = require('../models/cart.model')
 const shippingModel = require('../models/shipping.model')
 const orderModel = require('../models/order.model')
@@ -22,7 +25,7 @@ const paymentHistoryModel = require('../models/paymentHistory.model')
 const redis = require('../databases/init.redis')
 const mongoose = require('mongoose')
 const paypal = require('../middlewares/paypal.middleware')
-
+const KEY = require('../lang/key.socket')
 var that = module.exports = {
   addDeliveryInfo: (userId, address) => {
     return new Promise(async (resolve, reject) => {
@@ -1283,7 +1286,8 @@ var that = module.exports = {
                   ]}
                   
                 }
-              }
+              },
+              user:1
             }
           }
         ])
@@ -1331,6 +1335,30 @@ var that = module.exports = {
         },{
           new: true
         })
+
+        if(orderStatus.at(-1).type === "ordered"){
+          const noti = await new notificationModel({
+            type:{
+              type: 'order',
+              orderId: orderId
+            },
+            user: updated.at(0).user,
+            content:Message.noti_confirm_order_success,
+            title: Message.noti_titile_confirm_order_success
+          }).save()
+
+
+          global.users[noti.user]?.forEach((socketId) => {
+            global._io.sockets.to(socketId).emit(KEY.send_noti_confirm_order, {
+              title: noti.title,
+              content: noti.content,
+              type: noti.type
+            })
+          })
+         
+        }
+
+
         
         return resolve({
           data:{
@@ -1369,11 +1397,12 @@ var that = module.exports = {
                   ]}
                   
                 }
-              }
+              },
+              user: 1
             }
           }
         ])
-        console.log(updated)
+        
         if(_.isEmpty(updated)) return reject(errorResponse(404, createError.NotFound().message))
         const currentStatus = updated.at(0).items.at(0).orderStatus.at(-1)
         if(!(currentStatus.type === "shipped" || currentStatus.type === "delivered")){
@@ -1411,6 +1440,28 @@ var that = module.exports = {
         },{
           new: true
         })
+
+        if(orderStatus.at(-1).type === "shipped"){
+          const noti = await new notificationModel({
+            type:{
+              type: 'delivery',
+              orderId: orderId
+            },
+            user: updated.at(0).user,
+            content:Message.noti_confirm_shipping_success,
+            title: Message.noti_title_confirm_shipping_success
+          }).save()
+
+
+          global.users[noti.user]?.forEach((socketId) => {
+            global._io.sockets.to(socketId).emit(KEY.send_noti_confirm_shipping, {
+              title: noti.title,
+              content: noti.content,
+              type: noti.type
+            })
+          })
+         
+        }
         
         return resolve({
           data:{
