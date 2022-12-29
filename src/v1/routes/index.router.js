@@ -8,7 +8,7 @@ const profileRouter = require('./profile.router')
 const sellerRouter = require('./seller.router')
 const orderRouter = require('./order.router')
 const paymentRouter = require('./payment.router')
-
+const reviewRouter = require('./review.router')
 
 router.get('/checkstatus',async (req, res, next) => {
     
@@ -27,4 +27,5 @@ profileRouter(router)
 sellerRouter(router)
 orderRouter(router)
 paymentRouter(router)
+reviewRouter(router)
 module.exports = router;

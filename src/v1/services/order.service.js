@@ -1490,7 +1490,7 @@ var that = module.exports = {
                   user: updated.at(0).user
                 }
               ]
-            })
+            }).save()
           }
         }
         

@@ -99,6 +99,8 @@ module.exports = {
   "noti_confirm_order_success":"The seller confirmed your order",
   "noti_titile_confirm_order_success":"The order confirmation",
   "noti_confirm_shipping_success":"The shipper confirmed your order",
-  "noti_title_confirm_shipping_success":"The order confirmation"
+  "noti_title_confirm_shipping_success":"The order confirmation",
+  "not_authorize_review":"Please, buy the product first",
+  "add_review_success":"Add review success"
   
 }

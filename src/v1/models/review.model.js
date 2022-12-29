@@ -1,34 +1,65 @@
 const {Schema, model} = require('mongoose')
 
-const discussSchema  = new Schema({
-  discuss_id: Number,
+const commentSchema  = new Schema({
+  user:{
+    type: Schema.Types.ObjectId,
+    ref: "users"
+  },
+  discuss_id:Number,
   page: Number,
-  count: Number,
-  posted: Date,
+  count: {
+    type: Number,
+    default: 1
+  },
+  posted: {
+    type: Date,
+    default: Date.now()
+  },
   text: String,
-  file: Array,
-  score: Number,
+  file: {
+    type: Array,
+    default: []
+  },
+  score: {
+    type: Number,
+    default: 1
+  },
+  rating: {
+    type: Number,
+    default: 0
+  },
   meta:Object,
-  comment_likes:Array
-},{
-  collection: 'comments',
-  timestamps: true
+  comment_likes:{
+    type: Array,
+    default: []
+  },
+  comment_disLikes: {
+    type: Array,
+    default: []
+  }
 })
 
 const commentBucketSchema = new Schema({
-  discuss_id: Number,
   product:{
     type: Schema.Types.ObjectId,
     ref:"products"
   },
   page: Number,
   count: Number,
-  comments: [discussSchema]
+  comments: [commentSchema]
 },{
   collection: 'commentBucket'
 })
 
+const discussShema = new Schema({
+  product:{
+    type: Schema.Types.ObjectId,
+    ref:"products"
+  },
+  page: Number,
+  count: Number,
+})
 
 
-module.exports.DISCUSS = model('comments', discussSchema)
+module.exports.DISCUSS = model('comments', discussShema)
 module.exports.COMBUCK = model('commentBucket', commentBucketSchema)
