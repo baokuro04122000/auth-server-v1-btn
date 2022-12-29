@@ -131,6 +131,73 @@ var that = module.exports = {
       console.log(error)
       return reject(errorResponse(500, createError.InternalServerError().message))
     }
+  }),
+  deleteBucketComment: ({
+    userId,
+    productId,
+    page,
+    discuss_id
+  }) => new Promise(async (resolve, reject) => {
+    
+    try {
+      const deleted = await COMBUCK.updateOne({
+        product: productId,
+        page
+      },{
+        $pull:{
+          comments: {
+            discuss_id,
+            user: userId
+          }},
+        $inc: {count: -1}
+      })
+      if(deleted.modifiedCount){
+        return resolve({
+          data:{
+            message: Message.delete_success
+          }
+        })
+      }
+      return reject(errorResponse(404, Message.product_not_found))
+    } catch (error) {
+      console.log(error)
+      return reject(errorResponse(500, createError.InternalServerError().message))
+    }
+  }),
+  updateBucketComment: ({
+    productId,
+    page,
+    userId,
+    discuss_id,
+    comment
+  }) => new Promise(async (resolve, reject) => {
+    try {
+      const updated = await COMBUCK.updateOne({
+        product: productId,
+        page,
+        "comments":{$elemMatch:{
+          discuss_id,
+          user: userId
+        }}
+      },{
+        $set:{
+          "comments.$.text":comment.text,
+          "comments.$.file":comment.file,
+          "comments.$.rating":comment.rating
+        }
+      })
+      if(updated.modifiedCount){
+        return resolve({
+          data:{
+            message:Message.update_success
+          }
+        })
+      }
+      return reject(errorResponse(404, Message.product_not_found))
+    } catch (error) {
+      console.log(error)
+      return reject(errorResponse(500, createError.InternalServerError().message))
+    }
   })
 }
 

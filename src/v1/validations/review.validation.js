@@ -25,5 +25,18 @@ var that = module.exports = {
   checkPermissionSchema:yup.object({
     productId: yup.string()
     .required(),
+  }),
+  updateReviewSchema: yup.object({
+    page: yup.number()
+    .integer()
+    .min(0),
+    productId: yup.string()
+    .required(),
+    discuss_id: yup.string()
+    .required(),
+    comment: yup.object({
+      text: yup.string()
+      .required()
+    })
   })
 }

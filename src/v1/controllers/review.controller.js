@@ -54,5 +54,35 @@ var that = module.exports = {
     } catch (error) {
       res.status(error.status).json(error)
     }
+  },
+  delete: async (req, res) => {
+    const {productId, discuss_id, page} = req.body
+    
+    try {
+      const payload = await reviewService.deleteBucketComment({
+        productId,
+        discuss_id,
+        userId: req.payload._id,
+        page
+      })
+      res.json(payload)
+    } catch (error) {
+      res.status(error.status).json(error)
+    }
+  },
+  update: async (req, res) => {
+    const {productId, discuss_id, comment, page} = req.body
+    try {
+      const payload = await reviewService.updateBucketComment({
+        productId, 
+        discuss_id, 
+        userId: req.payload._id,
+        comment,
+        page
+      })
+      res.json(payload)
+    } catch (error) {
+      res.status(error.status).json(error)
+    }
   }
 }
