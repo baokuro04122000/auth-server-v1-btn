@@ -16,7 +16,11 @@ const discussSchema  = new Schema({
 })
 
 const commentBucketSchema = new Schema({
-  discuss_id,
+  discuss_id: Number,
+  product:{
+    type: Schema.Types.ObjectId,
+    ref:"products"
+  },
   page: Number,
   count: Number,
   comments: [discussSchema]

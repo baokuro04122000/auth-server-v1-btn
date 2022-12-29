@@ -7,9 +7,7 @@ const {
   getPaginatedItems,
   convertCurrencyVNDToUSD
 } = require('../utils')
-const {
-  emitNotifyToArray
-} = require('../utils/usersSocket')
+
 const APIFeatures = require('../utils/apiFeatures')
 const Message = require('../lang/en')
 const createError = require('http-errors')
@@ -18,6 +16,7 @@ const productModel = require('../models/product.model')
 const inventoryModel = require('../models/inventory.model')
 const shippingCompanyModel = require('../models/shippingCompany.model')
 const notificationModel = require('../models/notification.model')
+const permissionReviewModel = require('../models/permission.model')
 const cartModel = require('../models/cart.model')
 const shippingModel = require('../models/shipping.model')
 const orderModel = require('../models/order.model')
@@ -25,7 +24,7 @@ const paymentHistoryModel = require('../models/paymentHistory.model')
 const redis = require('../databases/init.redis')
 const mongoose = require('mongoose')
 const paypal = require('../middlewares/paypal.middleware')
-const KEY = require('../lang/key.socket')
+
 var that = module.exports = {
   addDeliveryInfo: (userId, address) => {
     return new Promise(async (resolve, reject) => {
@@ -1347,14 +1346,12 @@ var that = module.exports = {
             title: Message.noti_titile_confirm_order_success
           }).save()
 
-
-          global.users[noti.user]?.forEach((socketId) => {
-            global._io.sockets.to(socketId).emit(KEY.send_noti_confirm_order, {
-              title: noti.title,
-              content: noti.content,
-              type: noti.type
-            })
-          })
+          redis.publish('send_noti_order',JSON.stringify({
+            user: noti.user,
+            _title: noti.title,
+            content: noti.content,
+            type: noti.type
+          }))
          
         }
 
@@ -1452,15 +1449,49 @@ var that = module.exports = {
             title: Message.noti_title_confirm_shipping_success
           }).save()
 
-
-          global.users[noti.user]?.forEach((socketId) => {
-            global._io.sockets.to(socketId).emit(KEY.send_noti_confirm_shipping, {
-              title: noti.title,
-              content: noti.content,
-              type: noti.type
-            })
-          })
+          
+          redis.publish('send_noti_delivery',JSON.stringify({
+            user: noti.user,
+            _title: noti.title,
+            content: noti.content,
+            type: noti.type
+          }))
+          
          
+        }
+        
+        if(orderStatus.at(-1).type === "delivered"){
+          const productId = updated.at(0).items.at(0).product
+          
+          const checkExists = await permissionReviewModel.exists({
+            product: productId
+          })
+
+          if(checkExists) {
+            const checkUserExists = await permissionReviewModel.exists({
+              product: productId,
+              "list.user": updated.at(0).user
+            })
+            
+            if(!checkUserExists) {
+              await permissionReviewModel.updateOne({
+                product: productId
+              },{
+                $push:{
+                  list: updated.at(0).user
+                }
+              })
+            }
+          }else{
+            const permissionReview = new permissionReviewModel({
+              product: productId,
+              list:[
+                {
+                  user: updated.at(0).user
+                }
+              ]
+            })
+          }
         }
         
         return resolve({
