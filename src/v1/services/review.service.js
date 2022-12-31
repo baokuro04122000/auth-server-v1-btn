@@ -3,6 +3,7 @@ const {
   DISCUSS,
   COMBUCK
 } = require('../models/review.model')
+const productModel = require('../models/product.model')
 const permissionModel = require('../models/permission.model')
 const createError = require('http-errors')
 const Message = require('../lang/en')
@@ -81,6 +82,15 @@ var that = module.exports = {
          })
        }
       }
+      // temporary
+      await productModel.updateOne({
+        _id: productId
+      },{
+        $inc: {
+          "meta.totalReview": 1,
+          "meta.totalRating": comment.rating
+        }
+      })
       return resolve({
         data: {
           message: Message.add_review_success

@@ -60,7 +60,8 @@ const productSchema = new Schema({
   meta:{
     totalSold: {type: Number, default: 0},
     totalOrder: {type: Number, default: 0},
-    totalReview: {type: Number, default: 0}
+    totalReview: {type: Number, default: 0},
+    totalRating: {type: Number, default: 0}
   },
   specs:{
     type: Array,

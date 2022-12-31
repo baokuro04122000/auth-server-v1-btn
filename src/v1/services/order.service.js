@@ -1339,7 +1339,8 @@ var that = module.exports = {
           const noti = await new notificationModel({
             type:{
               type: 'order',
-              orderId: orderId
+              orderId: updated.at(0)._id,
+              productId: updated.at(0).items.at(0).product
             },
             user: updated.at(0).user,
             content:Message.noti_confirm_order_success,
@@ -1347,6 +1348,7 @@ var that = module.exports = {
           }).save()
 
           redis.publish('send_noti_order',JSON.stringify({
+            _id: noti._id,
             user: noti.user,
             _title: noti.title,
             content: noti.content,
@@ -1442,7 +1444,8 @@ var that = module.exports = {
           const noti = await new notificationModel({
             type:{
               type: 'delivery',
-              orderId: orderId
+              orderId: updated.at(0)._id,
+              productId: updated.at(0).items.at(0).product
             },
             user: updated.at(0).user,
             content:Message.noti_confirm_shipping_success,
@@ -1451,6 +1454,7 @@ var that = module.exports = {
 
           
           redis.publish('send_noti_delivery',JSON.stringify({
+            _id: noti._id,
             user: noti.user,
             _title: noti.title,
             content: noti.content,

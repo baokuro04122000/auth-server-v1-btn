@@ -9,6 +9,7 @@ const sellerRouter = require('./seller.router')
 const orderRouter = require('./order.router')
 const paymentRouter = require('./payment.router')
 const reviewRouter = require('./review.router')
+const notificationRouter = require('./notification.router')
 
 router.get('/checkstatus',async (req, res, next) => {
     
@@ -28,4 +29,6 @@ sellerRouter(router)
 orderRouter(router)
 paymentRouter(router)
 reviewRouter(router)
+notificationRouter(router)
+
 module.exports = router;
