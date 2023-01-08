@@ -1340,6 +1340,7 @@ var that = module.exports = {
             type:{
               type: 'order',
               orderId: updated.at(0)._id,
+              childId: updated.at(0).items.at(0)._id,
               productId: updated.at(0).items.at(0).product
             },
             user: updated.at(0).user,
@@ -1445,6 +1446,7 @@ var that = module.exports = {
             type:{
               type: 'delivery',
               orderId: updated.at(0)._id,
+              childId: updated.at(0).items.at(0)._id,
               productId: updated.at(0).items.at(0).product
             },
             user: updated.at(0).user,
