@@ -155,6 +155,7 @@ var that  = module.exports = {
       const data = await authService.googleLogin(googleUser)
       setCookies(res,'access_token', data.access_token, Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND))
       setCookies(res,'refresh_token', data.refresh_token, Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED))
+      
       res.redirect(`${process.env.CLIENT_ENDPOINT}/auth/login`)
     } catch (error) {
       console.log(error)
@@ -162,6 +163,18 @@ var that  = module.exports = {
     }
   },
 
+  googleLoginMobile:async (req, res) => {
+    try {
+      const code = req.query.code
+      const { id_token, access_token } = await authService.getGoogleOAuthTokens(code)
+      const googleUser = await authService.getGoogleUser(id_token, access_token)
+      const data = await authService.googleLogin(googleUser)
+      res.json(data)
+    } catch (error) {
+      console.log(error)
+      res.status(error.status).json(error)
+    }
+  },
   refreshToken :async (req,res) => {
     const refresh_token = req.cookies.refresh_token
     const checkRedis = await redis.get(refresh_token)

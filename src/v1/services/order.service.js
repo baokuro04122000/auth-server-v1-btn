@@ -1334,7 +1334,7 @@ var that = module.exports = {
         },{
           new: true
         })
-
+       
         if(orderStatus.at(-1).type === "ordered"){
           const noti = await new notificationModel({
             type:{

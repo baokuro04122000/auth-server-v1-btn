@@ -32,6 +32,7 @@ module.exports = authRouter= (router) => {
   router.get('/api/me', authController.getCurrentUser)
   router.get('/auth/logout',jwt.verifyAccessToken, authController.logout)
   
+  router.get('/auth/oauth/mobile-google', authController.googleLoginMobile)
   router.post('/auth/register/send-otp-again', authController.registerSendOTPAgain)
   
   router.get('/', (req, res)=>{
