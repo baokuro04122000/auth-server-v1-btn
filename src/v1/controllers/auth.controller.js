@@ -150,13 +150,14 @@ var that  = module.exports = {
   googleLogin: async (req, res) => {
     try {
       const code = req.query.code
+      console.log(req.query)
       const { id_token, access_token } = await authService.getGoogleOAuthTokens(code)
       const googleUser = await authService.getGoogleUser(id_token, access_token)
       const data = await authService.googleLogin(googleUser)
       setCookies(res,'access_token', data.access_token, Number(process.env.ACCESS_TOKEN_EXPIRED_BY_SECOND))
       setCookies(res,'refresh_token', data.refresh_token, Number(process.env.REFRESH_TOKEN_REDIS_EXPIRED))
       
-      res.redirect(`${process.env.CLIENT_ENDPOINT}/auth/login`)
+      //res.redirect(`${process.env.CLIENT_ENDPOINT}/auth/login`)
     } catch (error) {
       console.log(error)
       res.status(error.status).json(error)
@@ -165,8 +166,9 @@ var that  = module.exports = {
 
   googleLoginMobile:async (req, res) => {
     try {
-      const code = req.query.code
-      const { id_token, access_token } = await authService.getGoogleOAuthTokens(code)
+      //const code = req.query.code
+      //const { id_token, access_token } = await authService.getGoogleOAuthTokens(code)
+      const {id_token, access_token} = req.query
       const googleUser = await authService.getGoogleUser(id_token, access_token)
       const data = await authService.googleLogin(googleUser)
       res.json(data)
